@@ -43,7 +43,14 @@ export async function updateSession(request: NextRequest): Promise<{
 
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser()
+
+  // Drop stale/invalid refresh tokens so they don't spam the dev console.
+  if (error?.code === "refresh_token_not_found") {
+    await supabase.auth.signOut()
+    return { response, user: null }
+  }
 
   return { response, user }
 }

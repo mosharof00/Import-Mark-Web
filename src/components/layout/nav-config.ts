@@ -1,23 +1,27 @@
-import {
-  LayoutDashboard,
-  CircleCheck,
-  Package,
-  ShoppingCart,
-  Boxes,
-  Users,
-  Building2,
-  Ship,
-  FileBarChart,
-  Wallet,
-  type LucideIcon,
-} from "lucide-react"
-
 import type { UserRole } from "@/lib/auth/roles"
+
+/**
+ * String keys for nav icons. We store a key (not the lucide component itself)
+ * because this config is read in a Server Component (DashboardShell) and passed
+ * to the client Sidebar — React cannot serialize component functions across the
+ * server/client boundary. The Sidebar maps each key to its lucide icon.
+ */
+export type NavIcon =
+  | "dashboard"
+  | "approvals"
+  | "products"
+  | "orders"
+  | "inventory"
+  | "customers"
+  | "suppliers"
+  | "imports"
+  | "reports"
+  | "payments"
 
 export type NavItem = {
   label: string
   href: string
-  icon: LucideIcon
+  icon: NavIcon
 }
 
 /**
@@ -27,30 +31,30 @@ export type NavItem = {
  */
 export const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
   admin: [
-    { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-    { label: "Approvals", href: "/admin/approvals", icon: CircleCheck },
-    { label: "Products", href: "/admin/products", icon: Package },
-    { label: "Orders", href: "/admin/orders", icon: ShoppingCart },
-    { label: "Inventory", href: "/admin/inventory", icon: Boxes },
-    { label: "Customers", href: "/admin/customers", icon: Users },
-    { label: "Suppliers", href: "/admin/suppliers", icon: Building2 },
-    { label: "Imports", href: "/admin/imports", icon: Ship },
-    { label: "Reports", href: "/admin/reports", icon: FileBarChart },
+    { label: "Dashboard", href: "/admin", icon: "dashboard" },
+    { label: "Approvals", href: "/admin/approvals", icon: "approvals" },
+    { label: "Products", href: "/admin/products", icon: "products" },
+    { label: "Orders", href: "/admin/orders", icon: "orders" },
+    { label: "Inventory", href: "/admin/inventory", icon: "inventory" },
+    { label: "Customers", href: "/admin/customers", icon: "customers" },
+    { label: "Suppliers", href: "/admin/suppliers", icon: "suppliers" },
+    { label: "Imports", href: "/admin/imports", icon: "imports" },
+    { label: "Reports", href: "/admin/reports", icon: "reports" },
   ],
   manager: [
-    { label: "Dashboard", href: "/manager", icon: LayoutDashboard },
-    { label: "Orders", href: "/manager/orders", icon: ShoppingCart },
-    { label: "Products", href: "/manager/products", icon: Package },
-    { label: "Inventory", href: "/manager/inventory", icon: Boxes },
-    { label: "Customers", href: "/manager/customers", icon: Users },
-    { label: "Suppliers", href: "/manager/suppliers", icon: Building2 },
-    { label: "Imports", href: "/manager/imports", icon: Ship },
-    { label: "Payments", href: "/manager/payments", icon: Wallet },
+    { label: "Dashboard", href: "/manager", icon: "dashboard" },
+    { label: "Orders", href: "/manager/orders", icon: "orders" },
+    { label: "Products", href: "/manager/products", icon: "products" },
+    { label: "Inventory", href: "/manager/inventory", icon: "inventory" },
+    { label: "Customers", href: "/manager/customers", icon: "customers" },
+    { label: "Suppliers", href: "/manager/suppliers", icon: "suppliers" },
+    { label: "Imports", href: "/manager/imports", icon: "imports" },
+    { label: "Payments", href: "/manager/payments", icon: "payments" },
   ],
   customer: [
-    { label: "Dashboard", href: "/customer", icon: LayoutDashboard },
-    { label: "Browse Products", href: "/customer/products", icon: Package },
-    { label: "My Orders", href: "/customer/orders", icon: ShoppingCart },
-    { label: "Ledger", href: "/customer/ledger", icon: Wallet },
+    { label: "Dashboard", href: "/customer", icon: "dashboard" },
+    { label: "Browse Products", href: "/customer/products", icon: "products" },
+    { label: "My Orders", href: "/customer/orders", icon: "orders" },
+    { label: "Ledger", href: "/customer/ledger", icon: "payments" },
   ],
 }

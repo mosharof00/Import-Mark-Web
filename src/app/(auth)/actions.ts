@@ -20,13 +20,17 @@ import {
 
 /** Shape returned to the client forms when something goes wrong. */
 type ActionResult = { error: string }
+type LoginSuccess = { redirectTo: string }
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
 
 // ── LOGIN ────────────────────────────────────────────────────────────────
-// Email + password sign in for any role. On success we redirect to the role's
-// dashboard; role comes from the server-controlled app_metadata.
-export async function login(values: LoginInput): Promise<ActionResult | void> {
+// Email + password sign in for any role. On success we return the dashboard
+// path so the client can navigate — avoiding server-action redirect(), which
+// surfaces as a false "{}" error toast in some clients (e.g. mobile WebView).
+export async function login(
+  values: LoginInput
+): Promise<ActionResult | LoginSuccess> {
   const parsed = loginSchema.safeParse(values)
   if (!parsed.success) {
     return { error: "Please check the form and try again." }
@@ -39,11 +43,19 @@ export async function login(values: LoginInput): Promise<ActionResult | void> {
   })
 
   if (error) {
-    return { error: error.message }
+    return { error: error.message || "Invalid email or password." }
   }
 
   const role = getUserRole(data.user)
-  redirect(dashboardPathForRole(role))
+  if (!role) {
+    await supabase.auth.signOut()
+    return {
+      error:
+        "This account has no role assigned. Use a manager, admin, or customer account.",
+    }
+  }
+
+  return { redirectTo: dashboardPathForRole(role) }
 }
 
 // ── CUSTOMER SELF-REGISTRATION ─────────────────────────────────────────────

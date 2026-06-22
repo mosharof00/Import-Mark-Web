@@ -20,103 +20,139 @@ import { cn } from "@/lib/utils"
 type ActionResult = { error?: string } | void
 
 /**
- * Reusable Approve / Reject control for admin approval queues (orders,
- * products, etc.). The parent passes server actions:
- *  - `onApprove()` runs immediately.
- *  - `onReject(note)` opens a dialog to capture a rejection reason first.
+ * Reusable Approve / Reject control for admin approval queues (orders &
+ * products). BOTH actions open a confirmation dialog with a note/reason
+ * textarea before running:
+ *  - Approve: note is optional.
+ *  - Reject: reason is required.
  *
- * Both show a toast on error and refresh happens via the server action
- * (revalidatePath) in the caller.
+ * The parent passes bound server actions (e.g. `approveOrder.bind(null, id)`).
+ * Refreshing the list happens via `revalidatePath` inside those actions.
  */
 export function ApprovalButtons({
   onApprove,
   onReject,
-  size = "sm",
+  itemLabel = "item",
 }: {
-  onApprove: () => Promise<ActionResult>
+  onApprove: (note: string) => Promise<ActionResult>
   onReject: (note: string) => Promise<ActionResult>
-  size?: "xs" | "sm" | "default"
+  /** Used in dialog copy, e.g. "order" or "product". */
+  itemLabel?: string
 }) {
-  const [isPending, startTransition] = useTransition()
-  const [rejectOpen, setRejectOpen] = useState(false)
+  return (
+    <div className="flex items-center gap-2">
+      <ApprovalDialog
+        mode="approve"
+        itemLabel={itemLabel}
+        onConfirm={onApprove}
+      />
+      <ApprovalDialog mode="reject" itemLabel={itemLabel} onConfirm={onReject} />
+    </div>
+  )
+}
+
+function ApprovalDialog({
+  mode,
+  itemLabel,
+  onConfirm,
+}: {
+  mode: "approve" | "reject"
+  itemLabel: string
+  onConfirm: (note: string) => Promise<ActionResult>
+}) {
+  const [open, setOpen] = useState(false)
   const [note, setNote] = useState("")
+  const [isPending, startTransition] = useTransition()
 
-  function handleApprove() {
+  const isReject = mode === "reject"
+  const noteRequired = isReject
+
+  function handleConfirm() {
+    if (noteRequired && note.trim().length === 0) return
     startTransition(async () => {
-      const result = await onApprove()
+      const result = await onConfirm(note.trim())
       if (result?.error) {
         toast.error(result.error)
       } else {
-        toast.success("Approved.")
-      }
-    })
-  }
-
-  function handleReject() {
-    startTransition(async () => {
-      const result = await onReject(note)
-      if (result?.error) {
-        toast.error(result.error)
-      } else {
-        toast.success("Rejected.")
-        setRejectOpen(false)
+        toast.success(isReject ? "Rejected." : "Approved.")
+        setOpen(false)
         setNote("")
       }
     })
   }
 
+  const triggerButton = isReject ? (
+    <Button
+      variant="outline"
+      size="sm"
+      className="rounded-full border-red-300 px-5 text-red-700 transition-transform hover:bg-red-50 hover:text-red-800 active:scale-95 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
+    >
+      <X className="size-4" />
+      Reject
+    </Button>
+  ) : (
+    <Button
+      size="sm"
+      className="rounded-full px-5 transition-transform active:scale-95"
+    >
+      <Check className="size-4" />
+      Approve
+    </Button>
+  )
+
   return (
-    <div className="flex items-center gap-2">
-      <Button size={size} onClick={handleApprove} disabled={isPending}>
-        <Check className="size-4" />
-        Approve
-      </Button>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger render={triggerButton} />
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {isReject ? `Reject this ${itemLabel}?` : `Approve this ${itemLabel}?`}
+          </DialogTitle>
+          <DialogDescription>
+            {isReject
+              ? "Add a reason. The submitter will see this note."
+              : "Optionally add a note. This confirms the action."}
+          </DialogDescription>
+        </DialogHeader>
 
-      <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
-        <DialogTrigger
-          render={
-            <Button size={size} variant="destructive" disabled={isPending}>
-              <X className="size-4" />
-              Reject
-            </Button>
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          rows={3}
+          placeholder={
+            isReject ? "Reason for rejection..." : "Note (optional)..."
           }
+          className={cn(
+            "border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 w-full rounded-xl border bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
+          )}
         />
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reject this item?</DialogTitle>
-            <DialogDescription>
-              Add a short reason. The submitter will see this note.
-            </DialogDescription>
-          </DialogHeader>
 
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            rows={3}
-            placeholder="Reason for rejection..."
-            className={cn(
-              "border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
-            )}
+        <DialogFooter>
+          <DialogClose
+            render={
+              <Button
+                variant="ghost"
+                className="rounded-full px-5"
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+            }
           />
-
-          <DialogFooter>
-            <DialogClose
-              render={
-                <Button variant="outline" disabled={isPending}>
-                  Cancel
-                </Button>
-              }
-            />
-            <Button
-              variant="destructive"
-              onClick={handleReject}
-              disabled={isPending || note.trim().length === 0}
-            >
-              Confirm reject
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+          <Button
+            variant={isReject ? "destructive" : "default"}
+            onClick={handleConfirm}
+            disabled={isPending || (noteRequired && note.trim().length === 0)}
+            className="rounded-full px-5 transition-transform active:scale-95"
+          >
+            {isPending
+              ? "Working..."
+              : isReject
+                ? "Confirm reject"
+                : "Confirm approve"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

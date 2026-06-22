@@ -2,9 +2,37 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import {
+  LayoutDashboard,
+  CircleCheck,
+  Package,
+  ShoppingCart,
+  Boxes,
+  Users,
+  Building2,
+  Ship,
+  FileBarChart,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import type { NavItem } from "@/components/layout/nav-config"
+import type { NavItem, NavIcon } from "@/components/layout/nav-config"
+
+// Maps the serializable icon keys from nav-config to their lucide components.
+// Lives in this client component so the icons never cross the server boundary.
+const ICONS: Record<NavIcon, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  approvals: CircleCheck,
+  products: Package,
+  orders: ShoppingCart,
+  inventory: Boxes,
+  customers: Users,
+  suppliers: Building2,
+  imports: Ship,
+  reports: FileBarChart,
+  payments: Wallet,
+}
 
 /**
  * App sidebar. Client component so it can highlight the active link based on the
@@ -36,7 +64,7 @@ export function Sidebar({
             ? pathname === item.href
             : pathname === item.href || pathname.startsWith(`${item.href}/`)
 
-          const Icon = item.icon
+          const Icon = ICONS[item.icon]
           return (
             <Link
               key={item.href}

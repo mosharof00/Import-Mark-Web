@@ -2,6 +2,7 @@
 
 import { useEffect, useTransition } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
@@ -33,6 +34,7 @@ export function LoginForm({
   justRegistered: boolean
   hadError: boolean
 }) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   const form = useForm<LoginInput>({
@@ -53,9 +55,12 @@ export function LoginForm({
   function onSubmit(values: LoginInput) {
     startTransition(async () => {
       const result = await login(values)
-      if (result?.error) {
+      if ("error" in result) {
         toast.error(result.error)
+        return
       }
+      router.push(result.redirectTo)
+      router.refresh()
     })
   }
 

@@ -49,38 +49,42 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Warm, editorial palette extracted from the reference designs.
+     Page background is a soft cream (never pure white); cards sit slightly
+     lighter; text is near-black (#141414); secondary labels are warm gray. */
+  --background: #ece9e0;
+  --foreground: #141414;
+  --card: #f7f5ef;
+  --card-foreground: #141414;
+  --popover: #f7f5ef;
+  --popover-foreground: #141414;
+  --primary: #141414;
+  --primary-foreground: #f7f5ef;
+  --secondary: #e3dfd4;
+  --secondary-foreground: #141414;
+  --muted: #e7e4dd;
+  --muted-foreground: #828282;
+  --accent: #e3dfd4;
+  --accent-foreground: #141414;
+  --destructive: #b42318;
+  --border: #e7e4dd;
+  --input: #e7e4dd;
+  --ring: #828282;
+  /* Chart scale: near-black down through warm grays. */
+  --chart-1: #141414;
+  --chart-2: #4a4a4a;
+  --chart-3: #828282;
+  --chart-4: #a8a29a;
+  --chart-5: #d9d3c5;
+  --radius: 1rem;
+  --sidebar: #e9e5db;
+  --sidebar-foreground: #141414;
+  --sidebar-primary: #141414;
+  --sidebar-primary-foreground: #f7f5ef;
+  --sidebar-accent: #ddd8cb;
+  --sidebar-accent-foreground: #141414;
+  --sidebar-border: #e2ddd2;
+  --sidebar-ring: #828282;
 }
 
 .dark {
@@ -126,5 +130,30 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* Staggered "fade-up" entrance used by dashboard sections and rows.
+   `both` fill-mode keeps elements at opacity 0 until their delay elapses,
+   so staggering via inline animation-delay looks clean on first paint. */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.4s ease-out both;
+}
+
+/* Respect users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up {
+    animation: none;
   }
 }
