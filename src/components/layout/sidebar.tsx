@@ -13,6 +13,8 @@ import {
   Ship,
   FileBarChart,
   Wallet,
+  CreditCard,
+  MapPin,
   type LucideIcon,
 } from "lucide-react"
 
@@ -32,6 +34,8 @@ const ICONS: Record<NavIcon, LucideIcon> = {
   imports: Ship,
   reports: FileBarChart,
   payments: Wallet,
+  gateways: CreditCard,
+  addresses: MapPin,
 }
 
 /**

@@ -166,6 +166,65 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_addresses: {
+        Row: {
+          address_line_1: string
+          address_line_2: string | null
+          city: string
+          country: string
+          created_at: string
+          customer_id: string
+          id: string
+          is_default: boolean
+          label: string
+          postal_code: string | null
+          recipient_name: string
+          recipient_phone: string | null
+          state_province: string | null
+          updated_at: string
+        }
+        Insert: {
+          address_line_1: string
+          address_line_2?: string | null
+          city: string
+          country: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          is_default?: boolean
+          label: string
+          postal_code?: string | null
+          recipient_name: string
+          recipient_phone?: string | null
+          state_province?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address_line_1?: string
+          address_line_2?: string | null
+          city?: string
+          country?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          is_default?: boolean
+          label?: string
+          postal_code?: string | null
+          recipient_name?: string
+          recipient_phone?: string | null
+          state_province?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_addresses_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       import_shipment_items: {
         Row: {
           batch_number: string | null
@@ -571,6 +630,57 @@ export type Database = {
           },
         ]
       }
+      payment_gateways: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          bank_name: string | null
+          branch_name: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          instructions: string | null
+          name: string
+          routing_number: string | null
+          sort_order: number
+          status: Database["public"]["Enums"]["payment_gateway_status"]
+          type: Database["public"]["Enums"]["payment_mode"]
+          updated_at: string
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          bank_name?: string | null
+          branch_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          instructions?: string | null
+          name: string
+          routing_number?: string | null
+          sort_order?: number
+          status?: Database["public"]["Enums"]["user_status"]
+          type: Database["public"]["Enums"]["payment_mode"]
+          updated_at?: string
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          bank_name?: string | null
+          branch_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          instructions?: string | null
+          name?: string
+          routing_number?: string | null
+          sort_order?: number
+          status?: Database["public"]["Enums"]["user_status"]
+          type?: Database["public"]["Enums"]["payment_mode"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           approved_at: string | null
@@ -671,6 +781,7 @@ export type Database = {
       }
       sales_orders: {
         Row: {
+          address_id: string | null
           approved_at: string | null
           approved_by: string | null
           created_at: string
@@ -686,6 +797,7 @@ export type Database = {
           notes: string | null
           order_number: string | null
           paid_amount: number
+          payment_gateway_id: string | null
           payment_mode: Database["public"]["Enums"]["payment_mode"] | null
           payment_note: string | null
           rejection_note: string | null
@@ -695,6 +807,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          address_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string
@@ -710,6 +823,7 @@ export type Database = {
           notes?: string | null
           order_number?: string | null
           paid_amount?: number
+          payment_gateway_id?: string | null
           payment_mode?: Database["public"]["Enums"]["payment_mode"] | null
           payment_note?: string | null
           rejection_note?: string | null
@@ -719,6 +833,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string
@@ -734,6 +849,7 @@ export type Database = {
           notes?: string | null
           order_number?: string | null
           paid_amount?: number
+          payment_gateway_id?: string | null
           payment_mode?: Database["public"]["Enums"]["payment_mode"] | null
           payment_note?: string | null
           rejection_note?: string | null
@@ -743,6 +859,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_orders_address_id_fkey"
+            columns: ["address_id"]
+            isOneToOne: false
+            referencedRelation: "customer_addresses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_orders_approved_by_fkey"
             columns: ["approved_by"]
@@ -762,6 +885,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_orders_payment_gateway_id_fkey"
+            columns: ["payment_gateway_id"]
+            isOneToOne: false
+            referencedRelation: "payment_gateways"
             referencedColumns: ["id"]
           },
         ]
@@ -1075,6 +1205,7 @@ export type Database = {
         | "cheque"
         | "mobile_banking"
         | "other"
+      payment_gateway_status: "active" | "inactive"
       product_status: "pending_approval" | "active" | "inactive" | "rejected"
       purchase_payment_status: "unpaid" | "partially_paid" | "paid"
       shipment_status:
@@ -1244,6 +1375,7 @@ export const Constants = {
         "mobile_banking",
         "other",
       ],
+      payment_gateway_status: ["active", "inactive"],
       product_status: ["pending_approval", "active", "inactive", "rejected"],
       purchase_payment_status: ["unpaid", "partially_paid", "paid"],
       shipment_status: [

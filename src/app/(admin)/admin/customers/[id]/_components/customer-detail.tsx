@@ -9,6 +9,7 @@ import { formatDate, formatRelativeTime, formatTaka } from "@/lib/format"
 import type { OrderStatus, UserStatus } from "@/types"
 
 import { CustomerActions } from "./customer-actions"
+import { CustomerAddressesSection } from "@/components/shared/customer-addresses-section"
 
 function DetailCard({
   title,
@@ -194,6 +195,12 @@ export async function CustomerDetail({ customerId }: { customerId: string }) {
           ) : null}
         </DetailCard>
       </div>
+
+      <CustomerAddressesSection
+        customerId={customerId}
+        addressesPath="/admin/addresses"
+        newAddressHref={`/admin/addresses/new?customer=${customerId}`}
+      />
     </div>
   )
 }

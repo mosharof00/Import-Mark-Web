@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   type ColumnDef,
   type SortingState,
@@ -37,12 +38,15 @@ export function DataTable<TData, TValue>({
   data,
   searchPlaceholder,
   pageSize = 10,
+  getRowHref,
 }: {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   searchPlaceholder?: string
   pageSize?: number
+  getRowHref?: (row: TData) => string | undefined
 }) {
+  const router = useRouter()
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState("")
 
@@ -90,18 +94,33 @@ export function DataTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                const href = getRowHref?.(row.original)
+                return (
+                  <TableRow
+                    key={row.id}
+                    className={href ? "cursor-pointer" : undefined}
+                    onClick={
+                      href
+                        ? (e) => {
+                            const target = e.target as HTMLElement
+                            if (target.closest("a, button")) return
+                            router.push(href)
+                          }
+                        : undefined
+                    }
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )
+              })
             ) : (
               <TableRow>
                 <TableCell

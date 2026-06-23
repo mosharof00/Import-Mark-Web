@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { getAuthedUser } from "@/lib/auth/get-user"
 import { EmptyState } from "@/components/shared/empty-state"
 import { ErrorCard } from "@/components/shared/error-card"
-import type { OrderStatus } from "@/types"
+import type { DeliveryMethod, OrderStatus } from "@/types"
 
 import {
   CLOSED_STATUSES,
@@ -24,7 +24,7 @@ export async function OrderList({ status }: { status: OrderFilter }) {
     let query = supabase
       .from("sales_orders")
       .select(
-        "id, order_number, total_amount, paid_amount, due_amount, status, created_at, customers(full_name, company_name), order_items(id)"
+        "id, order_number, total_amount, paid_amount, due_amount, status, delivery_method, created_at, customers(full_name, company_name)"
       )
       .eq("created_by", user.id)
       .order("created_at", { ascending: false })
@@ -47,11 +47,11 @@ export async function OrderList({ status }: { status: OrderFilter }) {
       orderNumber: order.order_number,
       customerName: order.customers?.full_name ?? "Unknown",
       companyName: order.customers?.company_name ?? null,
-      itemCount: order.order_items?.length ?? 0,
       totalAmount: order.total_amount,
       paidAmount: order.paid_amount,
       dueAmount: order.due_amount ?? 0,
       status: order.status as OrderStatus,
+      deliveryMethod: order.delivery_method as DeliveryMethod,
       createdAt: order.created_at,
     }))
 
@@ -63,7 +63,7 @@ export async function OrderList({ status }: { status: OrderFilter }) {
             title="No orders found"
             description={
               status === "all"
-                ? "Orders you create for customers will appear here."
+                ? "Orders you create for customers will appear here. Use Place Order to get started."
                 : `No orders in "${ORDER_FILTER_LABELS[status]}".`
             }
           />

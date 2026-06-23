@@ -17,6 +17,8 @@ export type NavIcon =
   | "imports"
   | "reports"
   | "payments"
+  | "gateways"
+  | "addresses"
 
 export type NavItem = {
   label: string
@@ -39,6 +41,8 @@ export const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
     { label: "Customers", href: "/admin/customers", icon: "customers" },
     { label: "Suppliers", href: "/admin/suppliers", icon: "suppliers" },
     { label: "Imports", href: "/admin/imports", icon: "imports" },
+    { label: "Payment Gateways", href: "/admin/payment-gateways", icon: "gateways" },
+    { label: "Addresses", href: "/admin/addresses", icon: "addresses" },
     { label: "Reports", href: "/admin/reports", icon: "reports" },
   ],
   manager: [
@@ -50,6 +54,8 @@ export const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
     { label: "Suppliers", href: "/manager/suppliers", icon: "suppliers" },
     { label: "Imports", href: "/manager/imports", icon: "imports" },
     { label: "Payments", href: "/manager/payments", icon: "payments" },
+    { label: "Payment Gateways", href: "/manager/payment-gateways", icon: "gateways" },
+    { label: "Addresses", href: "/manager/addresses", icon: "addresses" },
   ],
   customer: [
     { label: "Dashboard", href: "/customer", icon: "dashboard" },

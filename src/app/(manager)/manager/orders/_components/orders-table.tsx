@@ -1,26 +1,29 @@
 "use client"
 
-import Link from "next/link"
 import { type ColumnDef } from "@tanstack/react-table"
 
-import { buttonVariants } from "@/components/ui/button"
 import { DataTable } from "@/components/shared/data-table"
 import { StatusBadge } from "@/components/shared/status-badge"
 import { cn } from "@/lib/utils"
-import { formatRelativeTime, formatTaka } from "@/lib/format"
-import type { OrderStatus } from "@/types"
+import { formatDate, formatTaka } from "@/lib/format"
+import type { DeliveryMethod, OrderStatus } from "@/types"
 
 export type OrderRow = {
   id: string
   orderNumber: string | null
   customerName: string
   companyName: string | null
-  itemCount: number
   totalAmount: number
   paidAmount: number
   dueAmount: number
   status: OrderStatus
+  deliveryMethod: DeliveryMethod
   createdAt: string
+}
+
+const DELIVERY_LABEL: Record<DeliveryMethod, string> = {
+  own_team: "Own delivery",
+  customer_pickup: "Pickup",
 }
 
 const columns: ColumnDef<OrderRow>[] = [
@@ -28,12 +31,9 @@ const columns: ColumnDef<OrderRow>[] = [
     accessorKey: "orderNumber",
     header: "Order #",
     cell: ({ row }) => (
-      <Link
-        href={`/manager/orders/${row.original.id}`}
-        className="text-foreground hover:text-muted-foreground font-medium underline-offset-4 hover:underline"
-      >
+      <span className="text-foreground font-medium">
         {row.original.orderNumber ?? "—"}
-      </Link>
+      </span>
     ),
   },
   {
@@ -50,15 +50,6 @@ const columns: ColumnDef<OrderRow>[] = [
           </p>
         ) : null}
       </div>
-    ),
-  },
-  {
-    accessorKey: "itemCount",
-    header: () => <span className="block text-center">Items</span>,
-    cell: ({ row }) => (
-      <span className="text-foreground block text-center tabular-nums">
-        {row.original.itemCount}
-      </span>
     ),
   },
   {
@@ -103,29 +94,21 @@ const columns: ColumnDef<OrderRow>[] = [
     ),
   },
   {
-    accessorKey: "createdAt",
-    header: "When",
+    accessorKey: "deliveryMethod",
+    header: "Delivery",
     cell: ({ row }) => (
       <span className="text-muted-foreground whitespace-nowrap">
-        {formatRelativeTime(row.original.createdAt)}
+        {DELIVERY_LABEL[row.original.deliveryMethod]}
       </span>
     ),
   },
   {
-    id: "actions",
-    header: () => <span className="block text-right">Actions</span>,
+    accessorKey: "createdAt",
+    header: "Date",
     cell: ({ row }) => (
-      <div className="flex justify-end">
-        <Link
-          href={`/manager/orders/${row.original.id}`}
-          className={cn(
-            buttonVariants({ variant: "outline", size: "sm" }),
-            "rounded-full px-4"
-          )}
-        >
-          View
-        </Link>
-      </div>
+      <span className="text-muted-foreground whitespace-nowrap">
+        {formatDate(row.original.createdAt)}
+      </span>
     ),
   },
 ]
@@ -138,6 +121,7 @@ export function OrdersTable({ data }: { data: OrderRow[] }) {
         data={data}
         searchPlaceholder="Search my orders..."
         pageSize={12}
+        getRowHref={(row) => `/manager/orders/${row.id}`}
       />
     </div>
   )

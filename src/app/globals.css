@@ -156,4 +156,38 @@
   .animate-fade-up {
     animation: none;
   }
+  .wizard-enter-forward,
+  .wizard-enter-back {
+    animation: none;
+  }
+}
+
+@keyframes wizard-slide-in-forward {
+  from {
+    opacity: 0;
+    transform: translateX(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes wizard-slide-in-back {
+  from {
+    opacity: 0;
+    transform: translateX(-1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.wizard-enter-forward {
+  animation: wizard-slide-in-forward 200ms ease-out both;
+}
+
+.wizard-enter-back {
+  animation: wizard-slide-in-back 200ms ease-out both;
 }

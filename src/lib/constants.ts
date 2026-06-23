@@ -3,6 +3,8 @@ import type {
   ProductStatus,
   ShipmentStatus,
   UserStatus,
+  PaymentGatewayStatus,
+  PaymentMode,
 } from "@/types"
 
 /**
@@ -52,4 +54,18 @@ export const SHIPMENT_STATUS_CONFIG: Record<ShipmentStatus, StatusConfig> = {
   customs_clearance: { label: "Customs clearance", className: AMBER },
   cleared: { label: "Cleared", className: GREEN },
   cancelled: { label: "Cancelled", className: GRAY },
+}
+
+export const GATEWAY_STATUS_CONFIG: Record<PaymentGatewayStatus, StatusConfig> =
+  {
+    active: { label: "Active", className: GREEN },
+    inactive: { label: "Inactive", className: GRAY },
+  }
+
+export const PAYMENT_MODE_LABEL: Record<PaymentMode, string> = {
+  cash: "Cash",
+  bank_transfer: "Bank transfer",
+  cheque: "Cheque",
+  mobile_banking: "Mobile banking",
+  other: "Other",
 }

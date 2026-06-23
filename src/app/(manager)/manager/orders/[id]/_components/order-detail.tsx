@@ -1,18 +1,29 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, Wallet, CreditCard, AlertCircle, Package, Clock } from "lucide-react"
+import {
+  ArrowLeft,
+  Wallet,
+  CreditCard,
+  AlertCircle,
+  Package,
+  Clock,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react"
 
 import { createClient } from "@/lib/supabase/server"
 import { getAuthedUser } from "@/lib/auth/get-user"
 import { StatusBadge } from "@/components/shared/status-badge"
 import { StatCard } from "@/components/shared/stat-card"
 import { ORDER_STATUS_CONFIG } from "@/lib/constants"
+import { formatCustomerAddress } from "@/lib/format-address"
 import { formatDate, formatRelativeTime, formatTaka } from "@/lib/format"
+import { cn } from "@/lib/utils"
 import type { DeliveryMethod, OrderStatus, PaymentMode } from "@/types"
 
 const DELIVERY_LABEL: Record<DeliveryMethod, string> = {
   own_team: "Own delivery team",
-  customer_pickup: "Customer pickup",
+  customer_pickup: "Godown pickup",
 }
 
 const PAYMENT_LABEL: Record<PaymentMode, string> = {
@@ -22,6 +33,14 @@ const PAYMENT_LABEL: Record<PaymentMode, string> = {
   mobile_banking: "Mobile banking",
   other: "Other",
 }
+
+const APPROVED_PLUS: OrderStatus[] = [
+  "approved",
+  "processing",
+  "ready_for_pickup",
+  "out_for_delivery",
+  "delivered",
+]
 
 function DetailCard({
   title,
@@ -49,6 +68,37 @@ function MetaRow({ label, value }: { label: string; value: React.ReactNode }) {
   )
 }
 
+function StatusBanner({ status }: { status: OrderStatus }) {
+  if (status === "pending_approval") {
+    return (
+      <div className="border-amber-200 bg-amber-50/70 flex items-center gap-2 rounded-xl border px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
+        <Clock className="size-4 shrink-0" />
+        Awaiting admin approval
+      </div>
+    )
+  }
+
+  if (status === "rejected") {
+    return (
+      <div className="border-red-200 bg-red-50/70 flex items-center gap-2 rounded-xl border px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
+        <XCircle className="size-4 shrink-0" />
+        This order was rejected
+      </div>
+    )
+  }
+
+  if (APPROVED_PLUS.includes(status)) {
+    return (
+      <div className="border-green-200 bg-green-50/70 flex items-center gap-2 rounded-xl border px-4 py-3 text-sm text-green-800 dark:border-green-900 dark:bg-green-950/30 dark:text-green-300">
+        <CheckCircle2 className="size-4 shrink-0" />
+        Order approved — fulfillment in progress or complete
+      </div>
+    )
+  }
+
+  return null
+}
+
 export async function OrderDetail({ orderId }: { orderId: string }) {
   const { user } = await getAuthedUser()
   if (!user) notFound()
@@ -58,7 +108,7 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
   const { data: order, error } = await supabase
     .from("sales_orders")
     .select(
-      "id, order_number, status, subtotal, discount_amount, total_amount, paid_amount, due_amount, delivery_method, delivery_address, payment_mode, payment_note, notes, rejection_note, created_at, updated_at, approved_at, delivered_at, dispatched_at, created_by, approved_by, customer_id, customers(full_name, company_name, phone, email)"
+      "id, order_number, status, subtotal, discount_amount, total_amount, paid_amount, due_amount, delivery_method, address_id, payment_gateway_id, payment_mode, payment_note, notes, rejection_note, created_at, updated_at, approved_at, delivered_at, dispatched_at, created_by, approved_by, customer_id, customers(full_name, company_name, phone, email), customer_addresses(label, recipient_name, recipient_phone, address_line_1, address_line_2, city, state_province, postal_code, country), payment_gateways(name, type, account_name, account_number, bank_name, instructions)"
     )
     .eq("id", orderId)
     .eq("created_by", user.id)
@@ -99,6 +149,15 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
   const status = order.status as OrderStatus
   const dueAmount = order.due_amount ?? 0
   const itemCount = items.length
+  const address = order.customer_addresses
+  const gateway = order.payment_gateways
+
+  const deliveryAddressText =
+    order.delivery_method === "customer_pickup"
+      ? "Godown pickup — no delivery address"
+      : address
+        ? `${address.label} — ${formatCustomerAddress(address)}${address.recipient_phone ? ` · ${address.recipient_phone}` : ""}`
+        : "—"
 
   const actorIds = [...new Set(history.map((h) => h.changed_by))]
   const [{ data: historyManagers }, { data: historyAdmins }] = await Promise.all([
@@ -122,6 +181,8 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
         <ArrowLeft className="size-4" />
         Back to orders
       </Link>
+
+      <StatusBanner status={status} />
 
       <div className="border-border bg-card flex flex-wrap items-start justify-between gap-4 rounded-2xl border p-6 shadow-sm">
         <div className="min-w-0 space-y-2">
@@ -152,12 +213,6 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
             </p>
           ) : null}
         </div>
-        {status === "pending_approval" ? (
-          <div className="border-amber-200 bg-amber-50/70 flex items-center gap-2 rounded-full border px-4 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
-            <Clock className="size-4 shrink-0" />
-            Awaiting admin approval
-          </div>
-        ) : null}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -212,10 +267,7 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
                         Unit price
                       </th>
                       <th className="px-2 py-2 text-right font-medium">
-                        Discount
-                      </th>
-                      <th className="px-2 py-2 text-right font-medium">
-                        Subtotal
+                        Line total
                       </th>
                     </tr>
                   </thead>
@@ -250,11 +302,6 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
                         <td className="text-muted-foreground px-2 py-3 text-right tabular-nums">
                           {formatTaka(item.unit_price)}
                         </td>
-                        <td className="text-muted-foreground px-2 py-3 text-right tabular-nums">
-                          {item.discount > 0
-                            ? formatTaka(item.discount)
-                            : "—"}
-                        </td>
                         <td className="text-foreground px-2 py-3 text-right font-medium tabular-nums">
                           {formatTaka(item.subtotal ?? 0)}
                         </td>
@@ -266,35 +313,50 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
             )}
           </DetailCard>
 
-          <DetailCard title="Status history">
+          <DetailCard title="Status timeline">
             {history.length === 0 ? (
               <p className="text-muted-foreground text-sm">
                 No status changes recorded yet.
               </p>
             ) : (
-              <ol className="space-y-4">
-                {history.map((entry, index) => (
-                  <li key={`${entry.changed_at}-${index}`} className="flex gap-3">
-                    <div className="bg-border mt-1.5 size-2 shrink-0 rounded-full" />
-                    <div className="min-w-0">
-                      <p className="text-foreground text-sm font-medium">
-                        {entry.from_status
-                          ? `${ORDER_STATUS_CONFIG[entry.from_status].label} → ${ORDER_STATUS_CONFIG[entry.to_status].label}`
-                          : ORDER_STATUS_CONFIG[entry.to_status].label}
-                      </p>
-                      <p className="text-muted-foreground text-xs">
-                        {actorName.get(entry.changed_by) ?? "Staff"} ·{" "}
-                        {formatDate(entry.changed_at)} (
-                        {formatRelativeTime(entry.changed_at)})
-                      </p>
-                      {entry.note ? (
-                        <p className="text-muted-foreground mt-1 text-xs">
-                          {entry.note}
+              <ol className="relative space-y-0">
+                {history.map((entry, index) => {
+                  const isLast = index === history.length - 1
+                  return (
+                    <li key={`${entry.changed_at}-${index}`} className="flex gap-4 pb-6 last:pb-0">
+                      <div className="flex flex-col items-center">
+                        <span
+                          className={cn(
+                            "flex size-3 shrink-0 rounded-full ring-4 ring-offset-2 ring-offset-card",
+                            isLast
+                              ? "bg-primary ring-primary/20"
+                              : "bg-muted-foreground/40 ring-transparent"
+                          )}
+                        />
+                        {!isLast ? (
+                          <span className="bg-border mt-1 w-px flex-1 min-h-8" />
+                        ) : null}
+                      </div>
+                      <div className="min-w-0 pt-0.5">
+                        <p className="text-foreground text-sm font-medium">
+                          {entry.from_status
+                            ? `${ORDER_STATUS_CONFIG[entry.from_status].label} → ${ORDER_STATUS_CONFIG[entry.to_status].label}`
+                            : ORDER_STATUS_CONFIG[entry.to_status].label}
                         </p>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
+                        <p className="text-muted-foreground text-xs">
+                          {actorName.get(entry.changed_by) ?? "Staff"} ·{" "}
+                          {formatDate(entry.changed_at)} (
+                          {formatRelativeTime(entry.changed_at)})
+                        </p>
+                        {entry.note ? (
+                          <p className="text-muted-foreground mt-1 text-xs">
+                            {entry.note}
+                          </p>
+                        ) : null}
+                      </div>
+                    </li>
+                  )
+                })}
               </ol>
             )}
           </DetailCard>
@@ -365,10 +427,7 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
                 label="Method"
                 value={DELIVERY_LABEL[order.delivery_method]}
               />
-              <MetaRow
-                label="Address"
-                value={order.delivery_address ?? "—"}
-              />
+              <MetaRow label="Address" value={deliveryAddressText} />
               <MetaRow
                 label="Dispatched"
                 value={
@@ -388,16 +447,34 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
             </div>
           </DetailCard>
 
-          <DetailCard title="Payment summary">
+          <DetailCard title="Payment">
             <div className="divide-border divide-y">
               <MetaRow
-                label="Advance mode"
+                label="Gateway"
+                value={gateway?.name ?? "—"}
+              />
+              <MetaRow
+                label="Type"
                 value={
-                  order.payment_mode
-                    ? PAYMENT_LABEL[order.payment_mode]
-                    : "—"
+                  gateway?.type
+                    ? PAYMENT_LABEL[gateway.type]
+                    : order.payment_mode
+                      ? PAYMENT_LABEL[order.payment_mode]
+                      : "—"
                 }
               />
+              {gateway?.account_number ? (
+                <MetaRow
+                  label="Account"
+                  value={gateway.account_number}
+                />
+              ) : null}
+              {gateway?.instructions ? (
+                <MetaRow
+                  label="Instructions"
+                  value={gateway.instructions}
+                />
+              ) : null}
               <MetaRow
                 label="Payment note"
                 value={order.payment_note ?? "—"}
@@ -407,8 +484,22 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
                 value={formatTaka(order.subtotal)}
               />
               <MetaRow
-                label="Discount"
-                value={formatTaka(order.discount_amount)}
+                label="Advance paid"
+                value={formatTaka(order.paid_amount)}
+              />
+              <MetaRow
+                label="Due"
+                value={
+                  <span
+                    className={
+                      dueAmount > 0
+                        ? "text-amber-700 dark:text-amber-400"
+                        : undefined
+                    }
+                  >
+                    {formatTaka(dueAmount)}
+                  </span>
+                }
               />
             </div>
           </DetailCard>

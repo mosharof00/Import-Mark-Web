@@ -3,6 +3,7 @@ import { Suspense } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 
 import { OrderDetail } from "./_components/order-detail"
+import { OrderPlacedToast } from "./_components/order-placed-toast"
 
 export const dynamic = "force-dynamic"
 
@@ -32,8 +33,13 @@ export default async function ManagerOrderDetailPage({
   const { id } = await params
 
   return (
-    <Suspense fallback={<OrderDetailSkeleton />}>
-      <OrderDetail orderId={id} />
-    </Suspense>
+    <>
+      <Suspense fallback={null}>
+        <OrderPlacedToast />
+      </Suspense>
+      <Suspense fallback={<OrderDetailSkeleton />}>
+        <OrderDetail orderId={id} />
+      </Suspense>
+    </>
   )
 }

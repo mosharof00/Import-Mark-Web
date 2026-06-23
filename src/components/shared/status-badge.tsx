@@ -5,12 +5,14 @@ import {
   PRODUCT_STATUS_CONFIG,
   USER_STATUS_CONFIG,
   SHIPMENT_STATUS_CONFIG,
+  GATEWAY_STATUS_CONFIG,
 } from "@/lib/constants"
 import type {
   OrderStatus,
   ProductStatus,
   ShipmentStatus,
   UserStatus,
+  PaymentGatewayStatus,
 } from "@/types"
 
 /**
@@ -23,6 +25,7 @@ type StatusBadgeProps =
   | { kind: "product"; value: ProductStatus }
   | { kind: "user"; value: UserStatus }
   | { kind: "shipment"; value: ShipmentStatus }
+  | { kind: "gateway"; value: PaymentGatewayStatus }
 
 export function StatusBadge(props: StatusBadgeProps) {
   const config =
@@ -32,7 +35,9 @@ export function StatusBadge(props: StatusBadgeProps) {
         ? PRODUCT_STATUS_CONFIG[props.value]
         : props.kind === "user"
           ? USER_STATUS_CONFIG[props.value]
-          : SHIPMENT_STATUS_CONFIG[props.value]
+          : props.kind === "gateway"
+            ? GATEWAY_STATUS_CONFIG[props.value]
+            : SHIPMENT_STATUS_CONFIG[props.value]
 
   return (
     <Badge variant="secondary" className={cn("border-0", config.className)}>
