@@ -1,35 +1,54 @@
-import { Sidebar } from "@/components/layout/sidebar"
-import { Topbar } from "@/components/layout/topbar"
-import { NAV_BY_ROLE } from "@/components/layout/nav-config"
+import { DashboardShellClient } from "@/components/layout/dashboard-shell-client"
+import { CurrencyProvider } from "@/components/providers/currency-provider"
+import {
+  getCurrentProfile,
+  getUnreadNotificationCount,
+} from "@/lib/auth/get-profile"
 import type { UserRole } from "@/lib/auth/roles"
-
-const ROLE_LABEL: Record<UserRole, string> = {
-  admin: "Administrator",
-  manager: "Manager",
-  customer: "Customer",
-}
+import { getPlatformCurrency } from "@/lib/settings/get-settings"
+import type { User } from "@supabase/supabase-js"
 
 /**
  * Shared dashboard layout used by all three role sections. It renders the
  * role-specific sidebar, a top bar, and the page content. The role layouts
  * (server components) pass in the authenticated user's role and display name.
  */
-export function DashboardShell({
+export async function DashboardShell({
   role,
-  displayName,
+  user,
   children,
 }: {
   role: UserRole
-  displayName: string
+  user: User
   children: React.ReactNode
 }) {
+  const profile = await getCurrentProfile(user.id, role)
+  const unreadCount = await getUnreadNotificationCount(user.id)
+  const currency = await getPlatformCurrency()
+
+  const displayName =
+    profile?.fullName ??
+    (user.user_metadata?.full_name as string | undefined) ??
+    user.email ??
+    "User"
+
   return (
-    <div className="flex h-full">
-      <Sidebar items={NAV_BY_ROLE[role]} title={ROLE_LABEL[role]} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar displayName={displayName} roleLabel={ROLE_LABEL[role]} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
-      </div>
-    </div>
+    <CurrencyProvider
+      currency={{
+        symbol: currency.symbol,
+        locale: currency.locale,
+        code: currency.currencyCode,
+      }}
+    >
+      <DashboardShellClient
+        role={role}
+        displayName={displayName}
+        email={profile?.email ?? user.email ?? ""}
+        avatarUrl={profile?.avatarUrl}
+        unreadCount={unreadCount}
+      >
+        {children}
+      </DashboardShellClient>
+    </CurrencyProvider>
   )
 }

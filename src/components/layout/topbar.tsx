@@ -1,32 +1,78 @@
-import { LogOut } from "lucide-react"
+"use client"
 
+import { Menu, X } from "lucide-react"
+
+import { UserMenu } from "@/components/layout/user-menu"
+import { BrandLogo } from "@/components/layout/brand-logo"
 import { Button } from "@/components/ui/button"
+import { ROLE_HOME, type UserRole } from "@/lib/auth/roles"
+
+const ROLE_LABEL: Record<UserRole, string> = {
+  admin: "Administrator",
+  manager: "Manager",
+  customer: "Customer",
+}
 
 /**
- * Top bar shown above each role's content. Displays the signed-in user's name
- * and role, plus a sign-out button. Sign-out posts to the /auth/signout route
- * handler so it works without any client-side JavaScript.
+ * Top bar shown above each role's content. On mobile, includes a menu toggle
+ * for the sidebar drawer.
  */
 export function Topbar({
+  role,
   displayName,
-  roleLabel,
+  email,
+  avatarUrl,
+  unreadCount,
+  menuOpen,
+  onMenuToggle,
 }: {
+  role: UserRole
   displayName: string
-  roleLabel: string
+  email: string
+  avatarUrl?: string | null
+  unreadCount?: number
+  menuOpen: boolean
+  onMenuToggle: () => void
 }) {
+  const roleLabel = ROLE_LABEL[role]
+
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b px-4">
-      <div className="flex flex-col leading-tight">
-        <span className="text-sm font-medium">{displayName}</span>
-        <span className="text-muted-foreground text-xs">{roleLabel}</span>
+      <div className="flex min-w-0 items-center gap-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="shrink-0 md:hidden"
+          onClick={onMenuToggle}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-sidebar"
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+        >
+          {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+        </Button>
+
+        <BrandLogo
+          href={ROLE_HOME[role]}
+          className="md:hidden"
+          showTagline={false}
+        />
+
+        <div className="hidden min-w-0 flex-col leading-tight md:flex">
+          <span className="truncate text-sm font-medium">{displayName}</span>
+          <span className="text-muted-foreground truncate text-xs">
+            {roleLabel}
+          </span>
+        </div>
       </div>
 
-      <form action="/auth/signout" method="post">
-        <Button type="submit" variant="ghost" size="sm">
-          <LogOut className="size-4" />
-          Sign out
-        </Button>
-      </form>
+      <UserMenu
+        role={role}
+        displayName={displayName}
+        email={email}
+        avatarUrl={avatarUrl}
+        unreadCount={unreadCount}
+      />
     </header>
   )
 }

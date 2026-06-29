@@ -10,13 +10,9 @@ export default async function ManagerLayout({
   children: React.ReactNode
 }) {
   const { user } = await requireRole("manager")
-  const displayName =
-    (user.user_metadata?.full_name as string | undefined) ??
-    user.email ??
-    "Manager"
 
   return (
-    <DashboardShell role="manager" displayName={displayName}>
+    <DashboardShell role="manager" user={user}>
       {children}
     </DashboardShell>
   )

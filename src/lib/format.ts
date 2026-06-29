@@ -2,26 +2,12 @@
  * Formatting helpers shared across the app.
  */
 
-const TAKA = "\u09F3" // ৳ Bangladeshi Taka sign
-
-/**
- * Formats a number as Bangladeshi Taka using the South Asian grouping system
- * (e.g. 145000 -> "৳1,45,000", 12500000 -> "৳1,25,00,000").
- *
- * `en-IN` locale gives the lakh/crore comma placement we want. Defaults to no
- * decimals for clean editorial KPIs; pass `fractionDigits` for line amounts.
- */
-export function formatTaka(
-  amount: number | null | undefined,
-  fractionDigits = 0
-): string {
-  const value = typeof amount === "number" && Number.isFinite(amount) ? amount : 0
-  const formatted = new Intl.NumberFormat("en-IN", {
-    minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits,
-  }).format(value)
-  return `${TAKA}${formatted}`
-}
+export {
+  formatCurrency,
+  formatTaka,
+  FALLBACK_CURRENCY,
+  type CurrencyFormat,
+} from "@/lib/format-currency"
 
 /**
  * Compact relative time, e.g. "just now", "5 minutes ago", "2 hours ago",

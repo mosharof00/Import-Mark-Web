@@ -30,9 +30,11 @@ import {
 export function LoginForm({
   justRegistered,
   hadError,
+  showRegistration = true,
 }: {
   justRegistered: boolean
   hadError: boolean
+  showRegistration?: boolean
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -122,12 +124,14 @@ export function LoginForm({
           </form>
         </Form>
 
-        <p className="text-muted-foreground mt-4 text-center text-sm">
-          New customer?{" "}
-          <Link href="/signup" className="text-foreground hover:underline">
-            Create an account
-          </Link>
-        </p>
+        {showRegistration ? (
+          <p className="text-muted-foreground mt-4 text-center text-sm">
+            New customer?{" "}
+            <Link href="/signup" className="text-foreground hover:underline">
+              Create an account
+            </Link>
+          </p>
+        ) : null}
       </CardContent>
     </Card>
   )

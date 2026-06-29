@@ -46,7 +46,12 @@ export async function createProduct(
 
   const data = parsed.data
   const supabase = await createClient()
+  const { getAppSettings } = await import("@/lib/settings/get-settings")
+  const settings = await getAppSettings()
   const now = new Date().toISOString()
+  const initialStatus = settings.product_requires_approval
+    ? "pending_approval"
+    : "active"
 
   const { data: product, error: insertError } = await supabase
     .from("products")
@@ -65,8 +70,11 @@ export async function createProduct(
       origin_country: data.originCountry?.trim() || null,
       description: data.description?.trim() || null,
       specifications: data.specifications?.trim() || null,
-      status: "pending_approval",
+      status: initialStatus,
       created_by: managerId,
+      ...(initialStatus === "active"
+        ? { approved_by: managerId, approved_at: now }
+        : {}),
     })
     .select("id")
     .single()

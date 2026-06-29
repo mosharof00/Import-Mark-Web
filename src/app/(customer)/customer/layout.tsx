@@ -10,13 +10,9 @@ export default async function CustomerLayout({
   children: React.ReactNode
 }) {
   const { user } = await requireRole("customer")
-  const displayName =
-    (user.user_metadata?.full_name as string | undefined) ??
-    user.email ??
-    "Customer"
 
   return (
-    <DashboardShell role="customer" displayName={displayName}>
+    <DashboardShell role="customer" user={user}>
       {children}
     </DashboardShell>
   )

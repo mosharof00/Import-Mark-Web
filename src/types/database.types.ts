@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          key: string
+          value: Json
+          category: string
+          label: string
+          description: string | null
+          value_type: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          key: string
+          value: Json
+          category: string
+          label: string
+          description?: string | null
+          value_type: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          key?: string
+          value?: Json
+          category?: string
+          label?: string
+          description?: string | null
+          value_type?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      platform_currency: {
+        Row: {
+          id: boolean
+          currency_code: string
+          currency_name: string
+          symbol: string
+          country: string
+          country_code: string
+          flag: string
+          locale: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: boolean
+          currency_code?: string
+          currency_name?: string
+          symbol?: string
+          country?: string
+          country_code?: string
+          flag?: string
+          locale?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: boolean
+          currency_code?: string
+          currency_name?: string
+          symbol?: string
+          country?: string
+          country_code?: string
+          flag?: string
+          locale?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       admins: {
         Row: {
           avatar_url: string | null
@@ -802,6 +874,7 @@ export type Database = {
           payment_note: string | null
           rejection_note: string | null
           status: Database["public"]["Enums"]["order_status"]
+          stock_reserved_at: string | null
           subtotal: number
           total_amount: number
           updated_at: string
@@ -828,6 +901,7 @@ export type Database = {
           payment_note?: string | null
           rejection_note?: string | null
           status?: Database["public"]["Enums"]["order_status"]
+          stock_reserved_at?: string | null
           subtotal?: number
           total_amount?: number
           updated_at?: string
@@ -854,6 +928,7 @@ export type Database = {
           payment_note?: string | null
           rejection_note?: string | null
           status?: Database["public"]["Enums"]["order_status"]
+          stock_reserved_at?: string | null
           subtotal?: number
           total_amount?: number
           updated_at?: string
@@ -1176,6 +1251,14 @@ export type Database = {
     Functions: {
       auth_role: { Args: never; Returns: string }
       auth_uid: { Args: never; Returns: string }
+      reserve_order_stock: {
+        Args: { p_actor_id: string; p_note?: string; p_order_id: string }
+        Returns: undefined
+      }
+      restore_order_stock: {
+        Args: { p_actor_id: string; p_note?: string; p_order_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       delivery_method: "own_team" | "customer_pickup"

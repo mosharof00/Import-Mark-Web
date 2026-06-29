@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server"
 import { StatusBadge } from "@/components/shared/status-badge"
 import { StatCard } from "@/components/shared/stat-card"
 import { ORDER_STATUS_CONFIG } from "@/lib/constants"
+import { formatCustomerAddress } from "@/lib/format-address"
 import { formatDate, formatRelativeTime, formatTaka } from "@/lib/format"
 import type { DeliveryMethod, OrderStatus, PaymentMode } from "@/types"
 
@@ -56,7 +57,7 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
   const { data: order, error } = await supabase
     .from("sales_orders")
     .select(
-      "id, order_number, status, subtotal, discount_amount, total_amount, paid_amount, due_amount, delivery_method, delivery_address, payment_mode, payment_note, notes, rejection_note, created_at, updated_at, approved_at, delivered_at, dispatched_at, created_by, approved_by, customer_id, customers(full_name, company_name, phone, email)"
+      "id, order_number, status, subtotal, discount_amount, total_amount, paid_amount, due_amount, delivery_method, address_id, payment_gateway_id, payment_mode, payment_note, notes, rejection_note, created_at, updated_at, approved_at, delivered_at, dispatched_at, created_by, approved_by, customer_id, customers(full_name, company_name, phone, email), customer_addresses(label, recipient_name, recipient_phone, address_line_1, address_line_2, city, state_province, postal_code, country), payment_gateways(name, type, account_name, account_number, bank_name, instructions)"
     )
     .eq("id", orderId)
     .single()
@@ -107,6 +108,15 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
   const status = order.status as OrderStatus
   const dueAmount = order.due_amount ?? 0
   const itemCount = items.length
+  const address = order.customer_addresses
+  const gateway = order.payment_gateways
+
+  const deliveryAddressText =
+    order.delivery_method === "customer_pickup"
+      ? "Godown pickup — no delivery address"
+      : address
+        ? `${address.label} — ${formatCustomerAddress(address)}${address.recipient_phone ? ` · ${address.recipient_phone}` : ""}`
+        : "—"
 
   // Resolve names for status-history actors (manager or admin ids).
   const actorIds = [...new Set(history.map((h) => h.changed_by))]
@@ -363,7 +373,7 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
               />
               <MetaRow
                 label="Address"
-                value={order.delivery_address ?? "—"}
+                value={deliveryAddressText}
               />
               <MetaRow
                 label="Dispatched"
@@ -384,16 +394,25 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
             </div>
           </DetailCard>
 
-          <DetailCard title="Payment summary">
+          <DetailCard title="Payment">
             <div className="divide-border divide-y">
+              <MetaRow label="Gateway" value={gateway?.name ?? "—"} />
               <MetaRow
-                label="Advance mode"
+                label="Type"
                 value={
-                  order.payment_mode
-                    ? PAYMENT_LABEL[order.payment_mode]
-                    : "—"
+                  gateway?.type
+                    ? PAYMENT_LABEL[gateway.type]
+                    : order.payment_mode
+                      ? PAYMENT_LABEL[order.payment_mode]
+                      : "—"
                 }
               />
+              {gateway?.account_number ? (
+                <MetaRow label="Account" value={gateway.account_number} />
+              ) : null}
+              {gateway?.instructions ? (
+                <MetaRow label="Instructions" value={gateway.instructions} />
+              ) : null}
               <MetaRow
                 label="Payment note"
                 value={order.payment_note ?? "—"}
@@ -401,6 +420,14 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
               <MetaRow
                 label="Subtotal"
                 value={formatTaka(order.subtotal)}
+              />
+              <MetaRow
+                label="Advance paid"
+                value={formatTaka(order.paid_amount)}
+              />
+              <MetaRow
+                label="Due"
+                value={formatTaka(dueAmount)}
               />
               <MetaRow
                 label="Discount"

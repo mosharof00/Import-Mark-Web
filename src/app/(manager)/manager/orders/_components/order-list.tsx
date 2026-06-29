@@ -2,6 +2,7 @@ import { ShoppingCart } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/server"
 import { getAuthedUser } from "@/lib/auth/get-user"
+import { getAppSettings } from "@/lib/settings/get-settings"
 import { EmptyState } from "@/components/shared/empty-state"
 import { ErrorCard } from "@/components/shared/error-card"
 import type { DeliveryMethod, OrderStatus } from "@/types"
@@ -19,6 +20,7 @@ export async function OrderList({ status }: { status: OrderFilter }) {
   if (!user) return <ErrorCard title="Couldn't load orders" />
 
   const supabase = await createClient()
+  const settings = await getAppSettings()
 
   try {
     let query = supabase
@@ -26,8 +28,11 @@ export async function OrderList({ status }: { status: OrderFilter }) {
       .select(
         "id, order_number, total_amount, paid_amount, due_amount, status, delivery_method, created_at, customers(full_name, company_name)"
       )
-      .eq("created_by", user.id)
       .order("created_at", { ascending: false })
+
+    if (!settings.manager_can_approve_orders) {
+      query = query.eq("created_by", user.id)
+    }
 
     if (status === "pending_approval") {
       query = query.eq("status", "pending_approval")

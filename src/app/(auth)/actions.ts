@@ -65,6 +65,12 @@ export async function login(
 export async function signUpCustomer(
   values: CustomerSignupInput
 ): Promise<ActionResult | void> {
+  const { getAppSettings } = await import("@/lib/settings/get-settings")
+  const settings = await getAppSettings()
+  if (!settings.public_customer_registration) {
+    return { error: "New customer registration is currently closed." }
+  }
+
   const parsed = customerSignupSchema.safeParse(values)
   if (!parsed.success) {
     return { error: "Please check the form and try again." }
@@ -132,13 +138,19 @@ export async function verifyCustomerOtp(
 
   // Create the matching customers row (bypasses RLS via the admin client).
   const meta = user.user_metadata ?? {}
+  const { getAppSettings } = await import("@/lib/settings/get-settings")
+  const settings = await getAppSettings()
+  const customerStatus = settings.customer_auto_activate_on_signup
+    ? "active"
+    : "pending"
+
   const { error: insertError } = await admin.from("customers").insert({
     id: user.id,
     full_name: (meta.full_name as string) ?? "Customer",
     email: user.email ?? parsed.data.email,
     phone: (meta.phone as string) ?? null,
     company_name: (meta.company_name as string) ?? null,
-    status: "pending",
+    status: customerStatus,
     created_by: null,
   })
   // Ignore duplicate inserts (e.g. if verification is retried).

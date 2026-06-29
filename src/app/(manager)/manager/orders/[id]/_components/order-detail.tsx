@@ -13,6 +13,8 @@ import {
 
 import { createClient } from "@/lib/supabase/server"
 import { getAuthedUser } from "@/lib/auth/get-user"
+import { getAppSettings } from "@/lib/settings/get-settings"
+import { OrderApprovalActions } from "@/components/shared/order-approval-actions"
 import { StatusBadge } from "@/components/shared/status-badge"
 import { StatCard } from "@/components/shared/stat-card"
 import { ORDER_STATUS_CONFIG } from "@/lib/constants"
@@ -104,15 +106,20 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
   if (!user) notFound()
 
   const supabase = await createClient()
+  const settings = await getAppSettings()
 
-  const { data: order, error } = await supabase
+  let orderQuery = supabase
     .from("sales_orders")
     .select(
       "id, order_number, status, subtotal, discount_amount, total_amount, paid_amount, due_amount, delivery_method, address_id, payment_gateway_id, payment_mode, payment_note, notes, rejection_note, created_at, updated_at, approved_at, delivered_at, dispatched_at, created_by, approved_by, customer_id, customers(full_name, company_name, phone, email), customer_addresses(label, recipient_name, recipient_phone, address_line_1, address_line_2, city, state_province, postal_code, country), payment_gateways(name, type, account_name, account_number, bank_name, instructions)"
     )
     .eq("id", orderId)
-    .eq("created_by", user.id)
-    .single()
+
+  if (!settings.manager_can_approve_orders) {
+    orderQuery = orderQuery.eq("created_by", user.id)
+  }
+
+  const { data: order, error } = await orderQuery.single()
 
   if (error || !order) notFound()
 
@@ -183,6 +190,12 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
       </Link>
 
       <StatusBanner status={status} />
+
+      <OrderApprovalActions
+        orderId={orderId}
+        status={status}
+        canApprove={settings.manager_can_approve_orders}
+      />
 
       <div className="border-border bg-card flex flex-wrap items-start justify-between gap-4 rounded-2xl border p-6 shadow-sm">
         <div className="min-w-0 space-y-2">

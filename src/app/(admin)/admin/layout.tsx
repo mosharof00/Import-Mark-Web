@@ -12,13 +12,9 @@ export default async function AdminLayout({
   children: React.ReactNode
 }) {
   const { user } = await requireRole("admin")
-  const displayName =
-    (user.user_metadata?.full_name as string | undefined) ??
-    user.email ??
-    "Admin"
 
   return (
-    <DashboardShell role="admin" displayName={displayName}>
+    <DashboardShell role="admin" user={user}>
       {children}
     </DashboardShell>
   )
