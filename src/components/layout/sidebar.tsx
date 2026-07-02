@@ -60,7 +60,7 @@ function SidebarNav({
 
   return (
     <>
-      <nav className="flex-1 space-y-1 overflow-y-auto p-2">
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-2">
         {items.map((item) => {
           const isRoot = item.href.split("/").length === 2
           const isActive = isRoot
@@ -87,7 +87,7 @@ function SidebarNav({
         })}
       </nav>
 
-      <div className="border-border border-t p-2">
+      <div className="border-border shrink-0 border-t p-2">
         <Link
           href={settingsHref}
           onClick={onNavigate}
@@ -184,7 +184,7 @@ export function Sidebar({
         id="mobile-sidebar"
         aria-hidden={!mobileOpen}
         className={cn(
-          "bg-sidebar text-sidebar-foreground fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r transition-transform duration-200 ease-in-out md:hidden",
+          "bg-sidebar text-sidebar-foreground fixed inset-y-0 left-0 z-50 flex h-dvh w-60 flex-col border-r transition-transform duration-200 ease-in-out md:hidden",
           mobileOpen ? "translate-x-0" : "pointer-events-none -translate-x-full"
         )}
       >
@@ -201,7 +201,7 @@ export function Sidebar({
         />
       </aside>
 
-      <aside className="bg-sidebar text-sidebar-foreground hidden w-60 shrink-0 flex-col border-r md:flex">
+      <aside className="bg-sidebar text-sidebar-foreground fixed inset-y-0 left-0 z-30 hidden h-dvh w-60 flex-col border-r md:flex">
         <SidebarHeader homeHref={homeHref} />
         <SidebarNav items={items} pathname={pathname} settingsHref={settingsHref} />
       </aside>

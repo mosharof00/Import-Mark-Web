@@ -11,6 +11,7 @@ import { formatDate, formatRelativeTime, formatTaka } from "@/lib/format"
 import type { DeliveryMethod, OrderStatus, PaymentMode } from "@/types"
 
 import { OrderActions } from "./order-actions"
+import { OrderFulfillmentActions } from "@/components/shared/order-fulfillment-actions"
 
 const DELIVERY_LABEL: Record<DeliveryMethod, string> = {
   own_team: "Own delivery team",
@@ -174,6 +175,12 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
         </div>
         <OrderActions orderId={order.id} status={status} />
       </div>
+
+      <OrderFulfillmentActions
+        orderId={order.id}
+        status={status}
+        deliveryMethod={order.delivery_method as DeliveryMethod}
+      />
 
       {/* KPI row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

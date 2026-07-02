@@ -31,7 +31,11 @@ export async function OrderList({ status }: { status: OrderFilter }) {
       .order("created_at", { ascending: false })
 
     if (!settings.manager_can_approve_orders) {
-      query = query.eq("created_by", user.id)
+      if (status === "in_progress") {
+        query = query.in("status", IN_PROGRESS_STATUSES)
+      } else {
+        query = query.eq("created_by", user.id)
+      }
     }
 
     if (status === "pending_approval") {

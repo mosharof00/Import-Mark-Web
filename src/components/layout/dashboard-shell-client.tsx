@@ -25,7 +25,7 @@ export function DashboardShellClient({
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-dvh overflow-hidden">
       <Sidebar
         items={NAV_BY_ROLE[role]}
         homeHref={LANDING_HOME}
@@ -33,7 +33,7 @@ export function DashboardShellClient({
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
       />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col md:ml-60">
         <Topbar
           role={role}
           displayName={displayName}
@@ -43,7 +43,7 @@ export function DashboardShellClient({
           menuOpen={mobileOpen}
           onMenuToggle={() => setMobileOpen((open) => !open)}
         />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
       </div>
     </div>
   )

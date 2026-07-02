@@ -1,15 +1,10 @@
 import type { OrderStatus } from "@/types"
+import {
+  CLOSED_STATUSES,
+  IN_PROGRESS_STATUSES,
+} from "@/lib/orders/status-flow"
 
-/** Orders actively moving through fulfillment (post-approval). */
-export const IN_PROGRESS_STATUSES: OrderStatus[] = [
-  "approved",
-  "processing",
-  "ready_for_pickup",
-  "out_for_delivery",
-]
-
-/** Terminal non-success states grouped for the Closed tab. */
-export const CLOSED_STATUSES: OrderStatus[] = ["rejected", "cancelled"]
+export { IN_PROGRESS_STATUSES, CLOSED_STATUSES }
 
 export type OrderFilter =
   | "all"
@@ -25,3 +20,5 @@ export const ORDER_FILTER_LABELS: Record<OrderFilter, string> = {
   delivered: "Delivered",
   closed: "Closed",
 }
+
+export type { OrderStatus }
