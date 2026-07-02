@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Bell, LogOut, Settings, User } from "lucide-react"
+import { Bell, LayoutDashboard, LogOut, Settings, User } from "lucide-react"
 
 import { Avatar } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -78,6 +78,10 @@ export function UserMenu({
           <DropdownMenuSeparator />
 
           <div className="p-1">
+            <DropdownMenuItem render={<Link href={base} />}>
+              <LayoutDashboard />
+              Go to dashboard
+            </DropdownMenuItem>
             <DropdownMenuItem render={<Link href={`${base}/profile`} />}>
               <User />
               Profile

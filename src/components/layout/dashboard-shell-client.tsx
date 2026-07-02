@@ -5,7 +5,7 @@ import { useState } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Topbar } from "@/components/layout/topbar"
 import { NAV_BY_ROLE } from "@/components/layout/nav-config"
-import { ROLE_HOME, type UserRole } from "@/lib/auth/roles"
+import { LANDING_HOME, type UserRole } from "@/lib/auth/roles"
 
 export function DashboardShellClient({
   role,
@@ -28,7 +28,7 @@ export function DashboardShellClient({
     <div className="flex h-full">
       <Sidebar
         items={NAV_BY_ROLE[role]}
-        homeHref={ROLE_HOME[role]}
+        homeHref={LANDING_HOME}
         role={role}
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}

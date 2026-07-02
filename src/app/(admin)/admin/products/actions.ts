@@ -6,6 +6,11 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { getAuthedUser } from "@/lib/auth/get-user"
 import {
+  deleteStorageUrls,
+  storageUrlsAdded,
+  storageUrlsToDelete,
+} from "@/lib/storage/cleanup"
+import {
   createProductSchema,
   type CreateProductInput,
   updateProductSchema,
@@ -51,6 +56,8 @@ export async function createProduct(
   const data = parsed.data
   const supabase = await createClient()
   const now = new Date().toISOString()
+  const imageUrls = data.imageUrls ?? []
+  const added = storageUrlsAdded([], imageUrls)
 
   const { data: product, error: insertError } = await supabase
     .from("products")
@@ -69,6 +76,7 @@ export async function createProduct(
       origin_country: data.originCountry?.trim() || null,
       description: data.description?.trim() || null,
       specifications: data.specifications?.trim() || null,
+      image_urls: imageUrls.length ? imageUrls : null,
       status: "active",
       created_by: adminId,
       approved_by: adminId,
@@ -78,6 +86,7 @@ export async function createProduct(
     .single()
 
   if (insertError || !product) {
+    await deleteStorageUrls(added)
     return { error: insertError?.message ?? "Could not create product." }
   }
 
@@ -150,13 +159,17 @@ export async function updateProduct(
 
   const { data: existing, error: fetchError } = await supabase
     .from("products")
-    .select("id")
+    .select("id, image_urls")
     .eq("id", productId)
     .single()
 
   if (fetchError || !existing) {
     return { error: "Product not found." }
   }
+
+  const imageUrls = data.imageUrls ?? []
+  const previousUrls = existing.image_urls ?? []
+  const added = storageUrlsAdded(previousUrls, imageUrls)
 
   const { error: updateError } = await supabase
     .from("products")
@@ -175,12 +188,16 @@ export async function updateProduct(
       origin_country: data.originCountry?.trim() || null,
       description: data.description?.trim() || null,
       specifications: data.specifications?.trim() || null,
+      image_urls: imageUrls.length ? imageUrls : null,
     })
     .eq("id", productId)
 
   if (updateError) {
+    await deleteStorageUrls(added)
     return { error: updateError.message }
   }
+
+  await deleteStorageUrls(storageUrlsToDelete(previousUrls, imageUrls))
 
   const { error: stockError } = await supabase
     .from("stock")

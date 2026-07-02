@@ -41,6 +41,7 @@ export const STOCK_RESERVE_OPTIONS: {
 
 export const SETTING_KEYS = {
   public_customer_registration: "boolean",
+  landing_show_product_prices: "boolean",
   manager_can_approve_orders: "boolean",
   customer_can_place_orders: "boolean",
   require_advance_payment: "boolean",
@@ -58,6 +59,7 @@ export type SettingKey = keyof typeof SETTING_KEYS
 
 export type AppSettings = {
   public_customer_registration: boolean
+  landing_show_product_prices: boolean
   manager_can_approve_orders: boolean
   customer_can_place_orders: boolean
   require_advance_payment: boolean
@@ -73,6 +75,7 @@ export type AppSettings = {
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   public_customer_registration: true,
+  landing_show_product_prices: true,
   manager_can_approve_orders: false,
   customer_can_place_orders: true,
   require_advance_payment: false,

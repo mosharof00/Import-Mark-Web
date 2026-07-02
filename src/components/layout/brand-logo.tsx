@@ -20,7 +20,7 @@ export function BrandLogo({
     <Link
       href={href}
       className={cn("flex min-w-0 items-center gap-3", className)}
-      aria-label="ImportMark home"
+      aria-label="ImportMark — go to website"
     >
       <Image
         src="/importmark-icon.png"

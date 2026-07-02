@@ -22,6 +22,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { cn } from "@/lib/utils"
+import { ProductImagesField } from "@/components/shared/product-images-field"
 
 type Option = { id: string; name: string }
 
@@ -73,6 +74,7 @@ export function AddProductForm({
       originCountry: "",
       description: "",
       specifications: "",
+      imageUrls: [],
       initialQuantity: 0,
       lowStockThreshold: 10,
     },
@@ -303,6 +305,13 @@ export function AddProductForm({
               </FormItem>
             )}
           />
+        </FormSection>
+
+        <FormSection
+          title="Images"
+          description="Upload product photos. Filenames match the product name."
+        >
+          <ProductImagesField form={form} disabled={isPending} />
         </FormSection>
 
         <FormSection

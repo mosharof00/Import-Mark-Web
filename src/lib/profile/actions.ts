@@ -6,6 +6,11 @@ import { createClient } from "@/lib/supabase/server"
 import { getAuthedUser } from "@/lib/auth/get-user"
 import { ROLE_HOME, type UserRole } from "@/lib/auth/roles"
 import {
+  deleteStorageUrls,
+  storageUrlsAdded,
+  storageUrlsToDelete,
+} from "@/lib/storage/cleanup"
+import {
   setPasswordSchema,
   type SetPasswordInput,
 } from "@/lib/validations/auth"
@@ -49,29 +54,71 @@ export async function updateProfile(
   const { user, role } = auth
   const data = parsed.data
   const supabase = await createClient()
-
   const phone = data.phone?.trim() || null
+  const nextAvatarUrl = data.avatarUrl?.trim() || null
+
+  let previousAvatarUrl: string | null = null
+
+  if (role === "admin") {
+    const { data: row } = await supabase
+      .from("admins")
+      .select("avatar_url")
+      .eq("id", user.id)
+      .single()
+    previousAvatarUrl = row?.avatar_url ?? null
+  } else if (role === "manager") {
+    const { data: row } = await supabase
+      .from("managers")
+      .select("avatar_url")
+      .eq("id", user.id)
+      .single()
+    previousAvatarUrl = row?.avatar_url ?? null
+  } else {
+    const { data: row } = await supabase
+      .from("customers")
+      .select("avatar_url")
+      .eq("id", user.id)
+      .single()
+    previousAvatarUrl = row?.avatar_url ?? null
+  }
+
+  const added = storageUrlsAdded(previousAvatarUrl, nextAvatarUrl)
 
   if (role === "admin") {
     const { error } = await supabase
       .from("admins")
-      .update({ full_name: data.fullName.trim(), phone })
+      .update({
+        full_name: data.fullName.trim(),
+        phone,
+        avatar_url: nextAvatarUrl,
+      })
       .eq("id", user.id)
 
-    if (error) return { error: error.message }
+    if (error) {
+      await deleteStorageUrls(added)
+      return { error: error.message }
+    }
   } else if (role === "manager") {
     const { error } = await supabase
       .from("managers")
-      .update({ full_name: data.fullName.trim(), phone })
+      .update({
+        full_name: data.fullName.trim(),
+        phone,
+        avatar_url: nextAvatarUrl,
+      })
       .eq("id", user.id)
 
-    if (error) return { error: error.message }
+    if (error) {
+      await deleteStorageUrls(added)
+      return { error: error.message }
+    }
   } else {
     const { error } = await supabase
       .from("customers")
       .update({
         full_name: data.fullName.trim(),
         phone,
+        avatar_url: nextAvatarUrl,
         company_name: data.companyName?.trim() || null,
         address: data.address?.trim() || null,
         area: data.area?.trim() || null,
@@ -79,8 +126,13 @@ export async function updateProfile(
       })
       .eq("id", user.id)
 
-    if (error) return { error: error.message }
+    if (error) {
+      await deleteStorageUrls(added)
+      return { error: error.message }
+    }
   }
+
+  await deleteStorageUrls(storageUrlsToDelete(previousAvatarUrl, nextAvatarUrl))
 
   await supabase.auth.updateUser({
     data: { full_name: data.fullName.trim(), phone },

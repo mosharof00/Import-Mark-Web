@@ -15,7 +15,12 @@ import type {
 
 export const dynamic = "force-dynamic"
 
-export default async function CustomerPlaceOrderPage() {
+export default async function CustomerPlaceOrderPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ productId?: string }>
+}) {
+  const { productId } = await searchParams
   const { user, role } = await getAuthedUser()
   if (!user || role !== "customer") notFound()
 
@@ -122,6 +127,7 @@ export default async function CustomerPlaceOrderPage() {
         gateways={gateways}
         requireAdvancePayment={settings.require_advance_payment}
         minAdvancePercent={settings.min_advance_payment_percent}
+        initialProductId={productId ?? null}
       />
     </div>
   )

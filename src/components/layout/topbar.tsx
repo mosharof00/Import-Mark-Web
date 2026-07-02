@@ -5,7 +5,7 @@ import { Menu, X } from "lucide-react"
 import { UserMenu } from "@/components/layout/user-menu"
 import { BrandLogo } from "@/components/layout/brand-logo"
 import { Button } from "@/components/ui/button"
-import { ROLE_HOME, type UserRole } from "@/lib/auth/roles"
+import { LANDING_HOME, type UserRole } from "@/lib/auth/roles"
 
 const ROLE_LABEL: Record<UserRole, string> = {
   admin: "Administrator",
@@ -53,7 +53,7 @@ export function Topbar({
         </Button>
 
         <BrandLogo
-          href={ROLE_HOME[role]}
+          href={LANDING_HOME}
           className="md:hidden"
           showTagline={false}
         />

@@ -29,7 +29,8 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
 // path so the client can navigate — avoiding server-action redirect(), which
 // surfaces as a false "{}" error toast in some clients (e.g. mobile WebView).
 export async function login(
-  values: LoginInput
+  values: LoginInput,
+  nextPath?: string | null
 ): Promise<ActionResult | LoginSuccess> {
   const parsed = loginSchema.safeParse(values)
   if (!parsed.success) {
@@ -55,7 +56,16 @@ export async function login(
     }
   }
 
-  return { redirectTo: dashboardPathForRole(role) }
+  const safeNext =
+    nextPath &&
+    nextPath.startsWith("/") &&
+    !nextPath.startsWith("//") &&
+    !nextPath.startsWith("/login") &&
+    !nextPath.startsWith("/signup")
+      ? nextPath
+      : null
+
+  return { redirectTo: safeNext ?? dashboardPathForRole(role) }
 }
 
 // ── CUSTOMER SELF-REGISTRATION ─────────────────────────────────────────────

@@ -41,7 +41,10 @@ const EDITABLE_TABS: SettingCategory[] = [
 ]
 
 type TabState = {
-  general: { settings: Pick<AppSettings, "public_customer_registration">; currency: CurrencyInput }
+  general: {
+    settings: Pick<AppSettings, "public_customer_registration">
+    currency: CurrencyInput
+  }
   customers: Pick<
     AppSettings,
     "customer_auto_activate_on_signup" | "manager_can_activate_customers"
@@ -59,6 +62,7 @@ type TabState = {
     | "manager_can_approve_products"
     | "product_requires_approval"
     | "customer_show_stock_quantity"
+    | "landing_show_product_prices"
   >
   inventory: Pick<AppSettings, "stock_reserve_on">
 }
@@ -109,6 +113,7 @@ export function AdminSettingsShell({
       manager_can_approve_products: settings.manager_can_approve_products,
       product_requires_approval: settings.product_requires_approval,
       customer_show_stock_quantity: settings.customer_show_stock_quantity,
+      landing_show_product_prices: settings.landing_show_product_prices,
     },
     inventory: {
       stock_reserve_on: settings.stock_reserve_on,
@@ -341,6 +346,13 @@ export function AdminSettingsShell({
                 description:
                   "Customers see exact quantities in the catalog.",
                 value: draft.products.customer_show_stock_quantity,
+              },
+              {
+                key: "landing_show_product_prices",
+                label: "Show product prices",
+                description:
+                  "Sell prices are visible on the public website and product catalog.",
+                value: draft.products.landing_show_product_prices,
               },
             ]}
             onChange={(key, value) =>

@@ -19,6 +19,7 @@ export type NavIcon =
   | "payments"
   | "gateways"
   | "addresses"
+  | "brands"
 
 export type NavItem = {
   label: string
@@ -36,6 +37,7 @@ export const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
     { label: "Dashboard", href: "/admin", icon: "dashboard" },
     { label: "Approvals", href: "/admin/approvals", icon: "approvals" },
     { label: "Products", href: "/admin/products", icon: "products" },
+    { label: "Brands", href: "/admin/brands", icon: "brands" },
     { label: "Orders", href: "/admin/orders", icon: "orders" },
     { label: "Inventory", href: "/admin/inventory", icon: "inventory" },
     { label: "Customers", href: "/admin/customers", icon: "customers" },

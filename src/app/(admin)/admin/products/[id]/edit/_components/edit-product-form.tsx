@@ -22,6 +22,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { cn } from "@/lib/utils"
+import { ProductImagesField } from "@/components/shared/product-images-field"
 
 type Option = { id: string; name: string }
 
@@ -280,6 +281,13 @@ export function EditProductForm({
               </FormItem>
             )}
           />
+        </FormSection>
+
+        <FormSection
+          title="Images"
+          description="Upload or remove product photos. Storage cleanup runs when you save."
+        >
+          <ProductImagesField form={form} disabled={isPending} />
         </FormSection>
 
         <FormSection

@@ -17,6 +17,7 @@ import {
   CreditCard,
   MapPin,
   Settings,
+  Tag,
   X,
   type LucideIcon,
 } from "lucide-react"
@@ -40,6 +41,7 @@ const ICONS: Record<NavIcon, LucideIcon> = {
   payments: Wallet,
   gateways: CreditCard,
   addresses: MapPin,
+  brands: Tag,
 }
 
 function SidebarNav({

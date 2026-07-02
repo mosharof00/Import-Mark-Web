@@ -20,6 +20,7 @@ const LABELS: Record<string, string> = {
   manager_can_approve_products: "Manager can approve products",
   product_requires_approval: "Require product approval",
   customer_show_stock_quantity: "Show stock count to customers",
+  landing_show_product_prices: "Show product prices",
   customer_auto_activate_on_signup: "Auto-activate new customers",
   manager_can_activate_customers: "Manager can activate customers",
   stock_reserve_on: "Reserve stock when order reaches",
@@ -52,6 +53,7 @@ const CATEGORY_KEYS: Record<string, string[]> = {
     "manager_can_approve_products",
     "product_requires_approval",
     "customer_show_stock_quantity",
+    "landing_show_product_prices",
   ],
   inventory: ["stock_reserve_on"],
 }

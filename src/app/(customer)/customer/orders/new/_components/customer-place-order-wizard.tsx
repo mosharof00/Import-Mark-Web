@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useEffect, useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
@@ -42,6 +42,7 @@ export function CustomerPlaceOrderWizard({
   gateways,
   requireAdvancePayment,
   minAdvancePercent,
+  initialProductId,
 }: {
   customerId: string
   customerName: string
@@ -53,6 +54,7 @@ export function CustomerPlaceOrderWizard({
   gateways: WizardGateway[]
   requireAdvancePayment: boolean
   minAdvancePercent: number
+  initialProductId?: string | null
 }) {
   const router = useRouter()
   const [step, setStep] = useState<1 | 2 | 3>(1)
@@ -69,6 +71,23 @@ export function CustomerPlaceOrderWizard({
   const [orderNotes, setOrderNotes] = useState("")
   const [isPending, startTransition] = useTransition()
   const [leaveOpen, setLeaveOpen] = useState(false)
+
+  useEffect(() => {
+    if (!initialProductId || cart.length > 0) return
+    const product = products.find((p) => p.id === initialProductId)
+    if (!product || product.stockAvailable <= 0) return
+    setCart([
+      {
+        productId: product.id,
+        name: product.name,
+        unit: product.unit,
+        unitPrice: product.sellPrice,
+        quantity: 1,
+        stockAvailable: product.stockAvailable,
+        avgCost: product.avgCost,
+      },
+    ])
+  }, [initialProductId, products, cart.length])
 
   const subtotal = useMemo(
     () => cart.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0),

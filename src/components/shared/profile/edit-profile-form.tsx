@@ -15,6 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { ImageUpload } from "@/components/shared/image-upload"
 import { updateProfile } from "@/lib/profile/actions"
 import {
   updateProfileSchema,
@@ -30,12 +31,15 @@ export function EditProfileForm({ profile }: { profile: UserProfile }) {
     defaultValues: {
       fullName: profile.fullName,
       phone: profile.phone ?? "",
+      avatarUrl: profile.avatarUrl ?? "",
       companyName: profile.companyName ?? "",
       address: profile.address ?? "",
       area: profile.area ?? "",
       city: profile.city ?? "",
     },
   })
+
+  const avatarUrl = form.watch("avatarUrl")
 
   function onSubmit(values: UpdateProfileInput) {
     startTransition(async () => {
@@ -51,6 +55,16 @@ export function EditProfileForm({ profile }: { profile: UserProfile }) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <ImageUpload
+          kind="user"
+          userId={profile.id}
+          label="Profile photo"
+          description="Saved to the users folder in storage. Your previous photo is removed after you save."
+          value={avatarUrl || null}
+          onChange={(url) => form.setValue("avatarUrl", url, { shouldDirty: true })}
+          disabled={isPending}
+        />
+
         <FormField
           control={form.control}
           name="fullName"

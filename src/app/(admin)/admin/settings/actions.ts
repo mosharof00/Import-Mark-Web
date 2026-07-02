@@ -35,6 +35,7 @@ const CATEGORY_KEYS: Record<
     "manager_can_approve_products",
     "product_requires_approval",
     "customer_show_stock_quantity",
+    "landing_show_product_prices",
   ],
   inventory: ["stock_reserve_on"],
 }
@@ -53,6 +54,8 @@ function revalidateSettingsPaths() {
   revalidatePath("/customer/settings")
   revalidatePath("/login")
   revalidatePath("/signup")
+  revalidatePath("/")
+  revalidatePath("/products")
 }
 
 export async function saveSettingsCategory(

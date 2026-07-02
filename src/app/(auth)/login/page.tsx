@@ -4,7 +4,7 @@ import { getPublicAppSettings } from "@/lib/settings/get-settings"
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ registered?: string; error?: string }>
+  searchParams: Promise<{ registered?: string; error?: string; next?: string }>
 }) {
   const params = await searchParams
   const { public_customer_registration } = await getPublicAppSettings()
@@ -14,6 +14,7 @@ export default async function LoginPage({
       justRegistered={params.registered === "1"}
       hadError={Boolean(params.error)}
       showRegistration={public_customer_registration}
+      nextPath={params.next ?? null}
     />
   )
 }

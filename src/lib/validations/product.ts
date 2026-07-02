@@ -1,5 +1,14 @@
 import { z } from "zod"
 
+const optionalUrl = z
+  .string()
+  .url("Enter a valid image URL.")
+  .or(z.literal(""))
+
+const imageUrlsSchema = z
+  .array(z.string().url("Enter a valid image URL."))
+  .max(8, "You can upload up to 8 images per product.")
+
 /**
  * Admin "Add product" form. Re-validated in the server action — never trust
  * the client.
@@ -17,6 +26,7 @@ export const createProductSchema = z.object({
   originCountry: z.string().optional(),
   description: z.string().optional(),
   specifications: z.string().optional(),
+  imageUrls: imageUrlsSchema.default([]),
   initialQuantity: z
     .number({ error: "Enter a valid quantity." })
     .min(0, "Quantity cannot be negative."),
@@ -41,6 +51,7 @@ export const updateProductSchema = z.object({
   originCountry: z.string().optional(),
   description: z.string().optional(),
   specifications: z.string().optional(),
+  imageUrls: imageUrlsSchema.default([]),
   lowStockThreshold: z
     .number({ error: "Enter a valid threshold." })
     .min(0, "Threshold cannot be negative."),

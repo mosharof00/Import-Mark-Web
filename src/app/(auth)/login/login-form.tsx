@@ -31,10 +31,12 @@ export function LoginForm({
   justRegistered,
   hadError,
   showRegistration = true,
+  nextPath,
 }: {
   justRegistered: boolean
   hadError: boolean
   showRegistration?: boolean
+  nextPath?: string | null
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -56,7 +58,7 @@ export function LoginForm({
 
   function onSubmit(values: LoginInput) {
     startTransition(async () => {
-      const result = await login(values)
+      const result = await login(values, nextPath)
       if ("error" in result) {
         toast.error(result.error)
         return
@@ -127,7 +129,14 @@ export function LoginForm({
         {showRegistration ? (
           <p className="text-muted-foreground mt-4 text-center text-sm">
             New customer?{" "}
-            <Link href="/signup" className="text-foreground hover:underline">
+            <Link
+              href={
+                nextPath
+                  ? `/signup?next=${encodeURIComponent(nextPath)}`
+                  : "/signup"
+              }
+              className="text-foreground hover:underline"
+            >
               Create an account
             </Link>
           </p>

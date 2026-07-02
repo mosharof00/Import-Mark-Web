@@ -28,6 +28,7 @@ export function GeneralSettingsForm({
         checked={settings.public_customer_registration}
         onCheckedChange={(checked) =>
           onSettingsChange({
+            ...settings,
             public_customer_registration: checked,
           })
         }

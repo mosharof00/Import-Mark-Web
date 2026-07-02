@@ -23,7 +23,7 @@ export default async function EditProductPage({
     supabase
       .from("products")
       .select(
-        "id, name, sku, category_id, brand_id, unit, unit_size, sell_price, origin_country, description, specifications, stock(quantity_available, low_stock_threshold)"
+        "id, name, sku, category_id, brand_id, unit, unit_size, sell_price, origin_country, description, specifications, image_urls, stock(quantity_available, low_stock_threshold)"
       )
       .eq("id", id)
       .single(),
@@ -63,6 +63,7 @@ export default async function EditProductPage({
     originCountry: product.origin_country ?? "",
     description: product.description ?? "",
     specifications: product.specifications ?? "",
+    imageUrls: product.image_urls ?? [],
     lowStockThreshold: stock?.low_stock_threshold ?? 10,
   }
 

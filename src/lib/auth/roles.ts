@@ -15,6 +15,9 @@ export const ROLES = {
   customer: "customer",
 } as const satisfies Record<UserRole, UserRole>
 
+/** Public marketing site entry point. */
+export const LANDING_HOME = "/"
+
 /** The root path of each role's section of the app. */
 export const ROLE_HOME: Record<UserRole, string> = {
   admin: "/admin",
