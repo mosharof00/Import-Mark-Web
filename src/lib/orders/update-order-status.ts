@@ -132,7 +132,8 @@ export async function updateOrderStatusCore(
   orderId: string,
   actorId: string,
   role: UserRole,
-  note?: string
+  note?: string,
+  deliveryImageUrl?: string | null
 ): Promise<ActionResult> {
   const auth = await authorizeFulfillmentUpdate(orderId, actorId, role)
   if ("error" in auth) return auth
@@ -164,6 +165,7 @@ export async function updateOrderStatusCore(
     status: OrderStatus
     dispatched_at?: string
     delivered_at?: string
+    delivery_image_url?: string | null
   } = { status: nextStatus }
 
   if (nextStatus === "out_for_delivery") {
@@ -171,6 +173,9 @@ export async function updateOrderStatusCore(
   }
   if (nextStatus === "delivered") {
     patch.delivered_at = now
+    if (deliveryImageUrl?.trim()) {
+      patch.delivery_image_url = deliveryImageUrl.trim()
+    }
   }
 
   const { error: updateError } = await supabase
@@ -206,7 +211,8 @@ export async function markOrderDeliveredCore(
   orderId: string,
   actorId: string,
   role: UserRole,
-  note?: string
+  note?: string,
+  deliveryImageUrl?: string | null
 ): Promise<ActionResult> {
   const auth = await authorizeFulfillmentUpdate(orderId, actorId, role)
   if ("error" in auth) return auth
@@ -229,6 +235,7 @@ export async function markOrderDeliveredCore(
     status: "delivered"
     delivered_at: string
     dispatched_at?: string
+    delivery_image_url?: string | null
   } = {
     status: "delivered",
     delivered_at: now,
@@ -240,6 +247,10 @@ export async function markOrderDeliveredCore(
     currentStatus !== "out_for_delivery"
   ) {
     patch.dispatched_at = now
+  }
+
+  if (deliveryImageUrl?.trim()) {
+    patch.delivery_image_url = deliveryImageUrl.trim()
   }
 
   const { error: updateError } = await supabase

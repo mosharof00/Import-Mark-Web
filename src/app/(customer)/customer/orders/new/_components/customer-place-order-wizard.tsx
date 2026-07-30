@@ -68,6 +68,7 @@ export function CustomerPlaceOrderWizard({
   const [paymentGatewayId, setPaymentGatewayId] = useState<string | null>(null)
   const [advancePaid, setAdvancePaid] = useState(0)
   const [paymentReference, setPaymentReference] = useState("")
+  const [advanceProofImageUrl, setAdvanceProofImageUrl] = useState("")
   const [orderNotes, setOrderNotes] = useState("")
   const [isPending, startTransition] = useTransition()
   const [leaveOpen, setLeaveOpen] = useState(false)
@@ -251,6 +252,7 @@ export function CustomerPlaceOrderWizard({
             paymentGatewayId={paymentGatewayId}
             advancePaid={advancePaid}
             paymentReference={paymentReference}
+            advanceProofImageUrl={advanceProofImageUrl}
             orderNotes={orderNotes}
             onDeliveryMethodChange={(method) => {
               setDeliveryMethod(method)
@@ -261,8 +263,10 @@ export function CustomerPlaceOrderWizard({
             onPaymentGatewayIdChange={setPaymentGatewayId}
             onAdvancePaidChange={setAdvancePaid}
             onPaymentReferenceChange={setPaymentReference}
+            onAdvanceProofImageUrlChange={setAdvanceProofImageUrl}
             onOrderNotesChange={setOrderNotes}
             createAddress={createCustomerAddress}
+            showAdvanceProof={false}
           />
         ) : null}
 

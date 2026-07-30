@@ -64,7 +64,7 @@ type TabState = {
     | "customer_show_stock_quantity"
     | "landing_show_product_prices"
   >
-  inventory: Pick<AppSettings, "stock_reserve_on">
+  inventory: Pick<AppSettings, "stock_reserve_on" | "manager_can_adjust_stock">
 }
 
 function toCurrencyInput(currency: PlatformCurrency): CurrencyInput {
@@ -117,6 +117,7 @@ export function AdminSettingsShell({
     },
     inventory: {
       stock_reserve_on: settings.stock_reserve_on,
+      manager_can_adjust_stock: settings.manager_can_adjust_stock,
     },
   })
 
@@ -365,15 +366,34 @@ export function AdminSettingsShell({
         ) : null}
 
         {activeTab === "inventory" ? (
-          <StockReserveForm
-            value={draft.inventory.stock_reserve_on}
-            onChange={(v) =>
-              setDraft((d) => ({
-                ...d,
-                inventory: { stock_reserve_on: v },
-              }))
-            }
-          />
+          <div className="space-y-6">
+            <ToggleSettingsForm
+              items={[
+                {
+                  key: "manager_can_adjust_stock",
+                  label: "Manager can adjust stock quantity",
+                  description:
+                    "Managers can use the Adjust button on Inventory to change product quantities.",
+                  value: draft.inventory.manager_can_adjust_stock,
+                },
+              ]}
+              onChange={(key, value) =>
+                setDraft((d) => ({
+                  ...d,
+                  inventory: { ...d.inventory, [key]: value },
+                }))
+              }
+            />
+            <StockReserveForm
+              value={draft.inventory.stock_reserve_on}
+              onChange={(v) =>
+                setDraft((d) => ({
+                  ...d,
+                  inventory: { ...d.inventory, stock_reserve_on: v },
+                }))
+              }
+            />
+          </div>
         ) : null}
 
         {activeTab === "security" ? <ChangePasswordForm /> : null}

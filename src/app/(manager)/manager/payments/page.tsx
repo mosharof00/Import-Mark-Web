@@ -41,24 +41,20 @@ export default async function ManagerPaymentsPage({
   let outstandingCount = 0
 
   if (user) {
-    const { data: orders } = await supabase
-      .from("sales_orders")
-      .select("id, due_amount")
-      .eq("created_by", user.id)
-      .not("status", "in", "(rejected,cancelled)")
+    const [{ count: paymentCountRes }, { count: outstandingCountRes }] =
+      await Promise.all([
+        supabase
+          .from("payments")
+          .select("id", { count: "exact", head: true }),
+        supabase
+          .from("sales_orders")
+          .select("id", { count: "exact", head: true })
+          .gt("due_amount", 0)
+          .not("status", "in", "(rejected,cancelled)"),
+      ])
 
-    const orderIds = (orders ?? []).map((o) => o.id)
-    outstandingCount = (orders ?? []).filter(
-      (o) => (o.due_amount ?? 0) > 0
-    ).length
-
-    if (orderIds.length > 0) {
-      const { count } = await supabase
-        .from("payments")
-        .select("id", { count: "exact", head: true })
-        .in("order_id", orderIds)
-      paymentCount = count ?? 0
-    }
+    paymentCount = paymentCountRes ?? 0
+    outstandingCount = outstandingCountRes ?? 0
   }
 
   const counts: Record<PaymentFilter, number> = {

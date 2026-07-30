@@ -20,10 +20,24 @@ export interface BuildBrandImagePathInput {
   originalFilename: string
 }
 
+export interface BuildDeliveryImagePathInput {
+  kind: "delivery"
+  orderId: string
+  originalFilename: string
+}
+
+export interface BuildPaymentImagePathInput {
+  kind: "payment"
+  orderId: string
+  originalFilename: string
+}
+
 export type StoragePathInput =
   | BuildUserImagePathInput
   | BuildProductImagePathInput
   | BuildBrandImagePathInput
+  | BuildDeliveryImagePathInput
+  | BuildPaymentImagePathInput
 
 /** Builds the object path (key) inside the `platform-media` bucket. */
 export function buildStoragePath(input: StoragePathInput): string {
@@ -41,6 +55,12 @@ export function buildStoragePath(input: StoragePathInput): string {
     case "brand": {
       const base = sanitizeFilename(input.preferredName) || "brand"
       return `${STORAGE_FOLDERS.brands}/${base}.${ext}`
+    }
+    case "delivery":
+      return `${STORAGE_FOLDERS.deliveries}/${input.orderId}.${ext}`
+    case "payment": {
+      const stamp = Date.now()
+      return `${STORAGE_FOLDERS.payments}/${input.orderId}-${stamp}.${ext}`
     }
   }
 }

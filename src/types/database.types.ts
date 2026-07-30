@@ -650,7 +650,9 @@ export type Database = {
           notes: string | null
           order_id: string
           payment_date: string
+          payment_gateway_id: string | null
           payment_mode: Database["public"]["Enums"]["payment_mode"]
+          proof_image_url: string | null
           recorded_by: string
           reference_no: string | null
         }
@@ -662,7 +664,9 @@ export type Database = {
           notes?: string | null
           order_id: string
           payment_date?: string
+          payment_gateway_id?: string | null
           payment_mode: Database["public"]["Enums"]["payment_mode"]
+          proof_image_url?: string | null
           recorded_by: string
           reference_no?: string | null
         }
@@ -674,7 +678,9 @@ export type Database = {
           notes?: string | null
           order_id?: string
           payment_date?: string
+          payment_gateway_id?: string | null
           payment_mode?: Database["public"]["Enums"]["payment_mode"]
+          proof_image_url?: string | null
           recorded_by?: string
           reference_no?: string | null
         }
@@ -698,6 +704,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_payment_gateway_id_fkey"
+            columns: ["payment_gateway_id"]
+            isOneToOne: false
+            referencedRelation: "payment_gateways"
             referencedColumns: ["id"]
           },
         ]
@@ -861,6 +874,7 @@ export type Database = {
           customer_id: string
           delivered_at: string | null
           delivery_address: string | null
+          delivery_image_url: string | null
           delivery_method: Database["public"]["Enums"]["delivery_method"]
           discount_amount: number
           dispatched_at: string | null
@@ -888,6 +902,7 @@ export type Database = {
           customer_id: string
           delivered_at?: string | null
           delivery_address?: string | null
+          delivery_image_url?: string | null
           delivery_method: Database["public"]["Enums"]["delivery_method"]
           discount_amount?: number
           dispatched_at?: string | null
@@ -915,6 +930,7 @@ export type Database = {
           customer_id?: string
           delivered_at?: string | null
           delivery_address?: string | null
+          delivery_image_url?: string | null
           delivery_method?: Database["public"]["Enums"]["delivery_method"]
           discount_amount?: number
           dispatched_at?: string | null

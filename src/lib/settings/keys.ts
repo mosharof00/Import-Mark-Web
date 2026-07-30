@@ -48,6 +48,7 @@ export const SETTING_KEYS = {
   min_advance_payment_percent: "number",
   manager_can_override_sell_price: "boolean",
   stock_reserve_on: "order_status",
+  manager_can_adjust_stock: "boolean",
   manager_can_approve_products: "boolean",
   product_requires_approval: "boolean",
   customer_show_stock_quantity: "boolean",
@@ -66,6 +67,7 @@ export type AppSettings = {
   min_advance_payment_percent: number
   manager_can_override_sell_price: boolean
   stock_reserve_on: StockReserveOn
+  manager_can_adjust_stock: boolean
   manager_can_approve_products: boolean
   product_requires_approval: boolean
   customer_show_stock_quantity: boolean
@@ -82,6 +84,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   min_advance_payment_percent: 0,
   manager_can_override_sell_price: true,
   stock_reserve_on: "pending_approval",
+  manager_can_adjust_stock: false,
   manager_can_approve_products: false,
   product_requires_approval: true,
   customer_show_stock_quantity: false,

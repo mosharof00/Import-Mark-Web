@@ -7,6 +7,7 @@ import { FadeIn } from "@/components/shared/fade-in"
 import { OrderStats } from "./_components/order-stats"
 import { OrderStatusTabs } from "./_components/order-status-tabs"
 import { OrderList } from "./_components/order-list"
+import { PlaceOrderButton } from "./_components/place-order-button"
 import {
   CLOSED_STATUSES,
   IN_PROGRESS_STATUSES,
@@ -77,6 +78,7 @@ export default async function OrdersPage({
       <PageHeader
         title="Orders"
         description="Track every sales order — approvals, fulfillment progress, payments, and delivery status."
+        action={<PlaceOrderButton href="/admin/orders/new" />}
       />
 
       <FadeIn delay={0}>

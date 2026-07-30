@@ -1,6 +1,7 @@
 import { Boxes } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/server"
+import { getAppSettings } from "@/lib/settings/get-settings"
 import { EmptyState } from "@/components/shared/empty-state"
 import { ErrorCard } from "@/components/shared/error-card"
 
@@ -13,6 +14,7 @@ import { InventoryTable, type InventoryRow } from "./inventory-table"
 
 export async function InventoryList({ status }: { status: InventoryFilter }) {
   const supabase = await createClient()
+  const settings = await getAppSettings()
 
   try {
     const { data: stockRows, error } = await supabase
@@ -67,7 +69,12 @@ export async function InventoryList({ status }: { status: InventoryFilter }) {
       )
     }
 
-    return <InventoryTable data={rows} />
+    return (
+      <InventoryTable
+        data={rows}
+        canAdjustStock={settings.manager_can_adjust_stock}
+      />
+    )
   } catch {
     return <ErrorCard title="Couldn't load inventory" />
   }

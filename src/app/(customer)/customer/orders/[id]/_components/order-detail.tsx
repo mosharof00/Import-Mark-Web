@@ -15,6 +15,8 @@ import { createClient } from "@/lib/supabase/server"
 import { getAuthedUser } from "@/lib/auth/get-user"
 import { StatusBadge } from "@/components/shared/status-badge"
 import { StatCard } from "@/components/shared/stat-card"
+import { PaymentHistory } from "@/components/shared/payments/payment-history"
+import { getOrderPaymentHistory } from "@/lib/payments/get-payment-history"
 import { ORDER_STATUS_CONFIG } from "@/lib/constants"
 import { formatCustomerAddress } from "@/lib/format-address"
 import { formatDate, formatRelativeTime, formatTaka } from "@/lib/format"
@@ -116,7 +118,7 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
 
   if (error || !order) notFound()
 
-  const [itemsRes, historyRes, paymentsRes] = await Promise.all([
+  const [itemsRes, historyRes, payments] = await Promise.all([
     supabase
       .from("order_items")
       .select(
@@ -129,16 +131,11 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
       .select("from_status, to_status, note, changed_at")
       .eq("order_id", orderId)
       .order("changed_at", { ascending: true }),
-    supabase
-      .from("payments")
-      .select("amount, payment_mode, payment_date, reference_no, notes")
-      .eq("order_id", orderId)
-      .order("payment_date", { ascending: false }),
+    getOrderPaymentHistory(orderId),
   ])
 
   const items = itemsRes.data ?? []
   const history = historyRes.data ?? []
-  const payments = paymentsRes.data ?? []
   const status = order.status as OrderStatus
   const dueAmount = order.due_amount ?? 0
   const itemCount = items.length
@@ -337,42 +334,7 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
             )}
           </DetailCard>
 
-          {payments.length > 0 ? (
-            <DetailCard title="Payments">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-sm">
-                  <thead>
-                    <tr className="text-muted-foreground text-left text-xs tracking-wider uppercase">
-                      <th className="px-2 py-2 font-medium">Date</th>
-                      <th className="px-2 py-2 font-medium">Mode</th>
-                      <th className="px-2 py-2 text-right font-medium">
-                        Amount
-                      </th>
-                      <th className="px-2 py-2 font-medium">Reference</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {payments.map((p, i) => (
-                      <tr key={i} className="border-border border-t">
-                        <td className="text-muted-foreground px-2 py-3 whitespace-nowrap">
-                          {formatDate(p.payment_date)}
-                        </td>
-                        <td className="text-foreground px-2 py-3 whitespace-nowrap">
-                          {PAYMENT_LABEL[p.payment_mode]}
-                        </td>
-                        <td className="text-foreground px-2 py-3 text-right font-medium tabular-nums">
-                          {formatTaka(p.amount)}
-                        </td>
-                        <td className="text-muted-foreground px-2 py-3">
-                          {p.reference_no ?? p.notes ?? "—"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </DetailCard>
-          ) : null}
+          <PaymentHistory payments={payments} />
         </div>
 
         <div className="space-y-6">

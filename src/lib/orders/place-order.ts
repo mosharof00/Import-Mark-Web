@@ -6,6 +6,12 @@ import { createClient } from "@/lib/supabase/server"
 import { formatTaka } from "@/lib/format"
 import { getAppSettings } from "@/lib/settings/get-settings"
 import { maybeReserveStockForStatus } from "@/lib/stock/order-stock"
+import {
+  insertNotifications,
+  listActiveAdminIds,
+  listManagerIds,
+  notifyPaymentRecorded,
+} from "@/lib/notifications/create-notifications"
 import type { PlaceOrderInput } from "@/lib/validations/order"
 
 type ActionResult = { error?: string; orderId?: string }
@@ -13,19 +19,25 @@ type ActionResult = { error?: string; orderId?: string }
 function revalidateOrderPaths(orderId: string) {
   revalidatePath("/admin")
   revalidatePath("/admin/approvals")
+  revalidatePath("/admin/orders")
+  revalidatePath(`/admin/orders/${orderId}`)
+  revalidatePath("/admin/payments")
+  revalidatePath("/admin/notifications")
   revalidatePath("/manager")
   revalidatePath("/manager/orders")
   revalidatePath(`/manager/orders/${orderId}`)
   revalidatePath("/manager/customers")
   revalidatePath("/manager/payments")
+  revalidatePath("/manager/notifications")
   revalidatePath("/customer/orders")
   revalidatePath(`/customer/orders/${orderId}`)
+  revalidatePath("/customer/notifications")
 }
 
 export async function placeOrderCore(
   data: PlaceOrderInput,
   actorId: string,
-  actorRole: "manager" | "customer"
+  actorRole: "admin" | "manager" | "customer"
 ): Promise<ActionResult> {
   const settings = await getAppSettings()
 
@@ -195,8 +207,11 @@ export async function placeOrderCore(
       customer_id: data.customerId,
       amount: data.advancePaid,
       payment_mode: gateway.type,
+      payment_gateway_id: data.paymentGatewayId,
       payment_date: today,
       reference_no: data.paymentReference?.trim() || null,
+      proof_image_url: data.advanceProofImageUrl?.trim() || null,
+      notes: "Advance payment on order placement",
       recorded_by: actorId,
     })
 
@@ -205,12 +220,26 @@ export async function placeOrderCore(
       await supabase.from("sales_orders").delete().eq("id", order.id)
       return { error: paymentError.message }
     }
+
+    if (actorRole !== "customer") {
+      await notifyPaymentRecorded({
+        actorId,
+        actorRoleLabel: actorRole === "admin" ? "Admin" : "Manager",
+        customerId: data.customerId,
+        orderId: order.id,
+        orderNumber: order.order_number,
+        amountLabel: formatTaka(data.advancePaid),
+        isAdvance: true,
+      })
+    }
   }
 
   const historyNote =
     actorRole === "customer"
       ? "Order placed by customer"
-      : "Order created by manager"
+      : actorRole === "admin"
+        ? "Order created by admin"
+        : "Order created by manager"
 
   const { error: historyError } = await supabase
     .from("order_status_history")
@@ -244,51 +273,28 @@ export async function placeOrderCore(
     return stockResult
   }
 
-  const { data: admins } = await supabase
-    .from("admins")
-    .select("id")
-    .eq("is_active", true)
+  const [admins, managers] = await Promise.all([
+    listActiveAdminIds(actorId),
+    settings.manager_can_approve_orders
+      ? listManagerIds(actorId)
+      : Promise.resolve([] as string[]),
+  ])
 
   const orderLabel = order.order_number ?? "New order"
-  const notifications: {
-    user_id: string
-    type: "order_pending_approval"
-    title: string
-    message: string
-    ref_id: string
-    ref_table: "sales_orders"
-  }[] = []
+  const message = `Order ${orderLabel} from ${customer.full_name} — ${formatTaka(subtotal)}`
+  const recipientIds = new Set<string>([...admins, ...managers])
 
-  if (admins?.length) {
-    for (const admin of admins) {
-      notifications.push({
-        user_id: admin.id,
-        type: "order_pending_approval",
+  if (recipientIds.size) {
+    await insertNotifications(
+      [...recipientIds].map((userId) => ({
+        user_id: userId,
+        type: "order_pending_approval" as const,
         title: "New order awaiting approval",
-        message: `Order ${orderLabel} from ${customer.full_name} — ${formatTaka(subtotal)}`,
+        message,
         ref_id: order.id,
         ref_table: "sales_orders",
-      })
-    }
-  }
-
-  if (settings.manager_can_approve_orders) {
-    const { data: managers } = await supabase.from("managers").select("id")
-    for (const manager of managers ?? []) {
-      if (manager.id === actorId) continue
-      notifications.push({
-        user_id: manager.id,
-        type: "order_pending_approval",
-        title: "New order awaiting approval",
-        message: `Order ${orderLabel} from ${customer.full_name} — ${formatTaka(subtotal)}`,
-        ref_id: order.id,
-        ref_table: "sales_orders",
-      })
-    }
-  }
-
-  if (notifications.length) {
-    await supabase.from("notifications").insert(notifications)
+      }))
+    )
   }
 
   revalidateOrderPaths(order.id)

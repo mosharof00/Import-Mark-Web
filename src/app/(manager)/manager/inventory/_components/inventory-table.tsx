@@ -198,113 +198,123 @@ function AdjustStockDialog({ row }: { row: InventoryRow }) {
   )
 }
 
-const columns: ColumnDef<InventoryRow>[] = [
-  {
-    accessorKey: "name",
-    header: "Product",
-    cell: ({ row }) => (
-      <div>
-        <Link
-          href={`/manager/products/${row.original.productId}`}
-          className="text-foreground hover:text-muted-foreground font-medium underline-offset-4 hover:underline"
-        >
-          {row.original.name}
-        </Link>
-        <p className="text-muted-foreground text-xs">
-          {row.original.sku ?? "No SKU"}
-        </p>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "categoryName",
-    header: "Category",
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original.categoryName}</span>
-    ),
-  },
-  {
-    accessorKey: "brandName",
-    header: "Brand",
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">
-        {row.original.brandName ?? "—"}
-      </span>
-    ),
-  },
-  {
-    accessorKey: "quantity",
-    header: () => <span className="block text-right">Available</span>,
-    cell: ({ row }) => (
-      <span
-        className={cn(
-          "block text-right text-lg font-semibold tabular-nums",
-          row.original.health === "out_of_stock"
-            ? "text-red-700 dark:text-red-400"
-            : row.original.health === "low_stock"
-              ? "text-amber-700 dark:text-amber-400"
-              : "text-foreground"
-        )}
-      >
-        {row.original.quantity}
-      </span>
-    ),
-  },
-  {
-    accessorKey: "threshold",
-    header: () => <span className="block text-right">Threshold</span>,
-    cell: ({ row }) => (
-      <span className="text-muted-foreground block text-right tabular-nums">
-        {row.original.threshold}
-      </span>
-    ),
-  },
-  {
-    accessorKey: "health",
-    header: "Status",
-    cell: ({ row }) => {
-      const config = HEALTH_CONFIG[row.original.health]
-      return (
-        <Badge variant="secondary" className={cn("border-0", config.className)}>
-          {config.label}
-        </Badge>
-      )
+function buildColumns(canAdjustStock: boolean): ColumnDef<InventoryRow>[] {
+  return [
+    {
+      accessorKey: "name",
+      header: "Product",
+      cell: ({ row }) => (
+        <div>
+          <Link
+            href={`/manager/products/${row.original.productId}`}
+            className="text-foreground hover:text-muted-foreground font-medium underline-offset-4 hover:underline"
+          >
+            {row.original.name}
+          </Link>
+          <p className="text-muted-foreground text-xs">
+            {row.original.sku ?? "No SKU"}
+          </p>
+        </div>
+      ),
     },
-  },
-  {
-    accessorKey: "lastUpdated",
-    header: "Updated",
-    cell: ({ row }) => (
-      <span className="text-muted-foreground whitespace-nowrap">
-        {formatRelativeTime(row.original.lastUpdated)}
-      </span>
-    ),
-  },
-  {
-    id: "actions",
-    header: () => <span className="block text-right">Actions</span>,
-    cell: ({ row }) => (
-      <div className="flex justify-end gap-2">
-        <Link
-          href={`/manager/products/${row.original.productId}`}
+    {
+      accessorKey: "categoryName",
+      header: "Category",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{row.original.categoryName}</span>
+      ),
+    },
+    {
+      accessorKey: "brandName",
+      header: "Brand",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {row.original.brandName ?? "—"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "quantity",
+      header: () => <span className="block text-right">Available</span>,
+      cell: ({ row }) => (
+        <span
           className={cn(
-            buttonVariants({ variant: "outline", size: "sm" }),
-            "rounded-full px-4"
+            "block text-right text-lg font-semibold tabular-nums",
+            row.original.health === "out_of_stock"
+              ? "text-red-700 dark:text-red-400"
+              : row.original.health === "low_stock"
+                ? "text-amber-700 dark:text-amber-400"
+                : "text-foreground"
           )}
         >
-          View
-        </Link>
-        <AdjustStockDialog key={row.original.productId} row={row.original} />
-      </div>
-    ),
-  },
-]
+          {row.original.quantity}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "threshold",
+      header: () => <span className="block text-right">Threshold</span>,
+      cell: ({ row }) => (
+        <span className="text-muted-foreground block text-right tabular-nums">
+          {row.original.threshold}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "health",
+      header: "Status",
+      cell: ({ row }) => {
+        const config = HEALTH_CONFIG[row.original.health]
+        return (
+          <Badge variant="secondary" className={cn("border-0", config.className)}>
+            {config.label}
+          </Badge>
+        )
+      },
+    },
+    {
+      accessorKey: "lastUpdated",
+      header: "Updated",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground whitespace-nowrap">
+          {formatRelativeTime(row.original.lastUpdated)}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: () => <span className="block text-right">Actions</span>,
+      cell: ({ row }) => (
+        <div className="flex justify-end gap-2">
+          <Link
+            href={`/manager/products/${row.original.productId}`}
+            className={cn(
+              buttonVariants({ variant: "outline", size: "sm" }),
+              "rounded-full px-4"
+            )}
+          >
+            View
+          </Link>
+          {canAdjustStock ? (
+            <AdjustStockDialog key={row.original.productId} row={row.original} />
+          ) : null}
+        </div>
+      ),
+    },
+  ]
+}
 
-export function InventoryTable({ data }: { data: InventoryRow[] }) {
+export function InventoryTable({
+  data,
+  canAdjustStock = false,
+}: {
+  data: InventoryRow[]
+  canAdjustStock?: boolean
+}) {
   return (
     <div className="border-border bg-card rounded-2xl border p-4 shadow-sm md:p-6">
       <DataTable
-        columns={columns}
+        columns={buildColumns(canAdjustStock)}
         data={data}
         searchPlaceholder="Search inventory..."
         pageSize={12}

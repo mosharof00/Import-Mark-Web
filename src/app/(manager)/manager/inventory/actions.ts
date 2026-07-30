@@ -30,6 +30,12 @@ export async function adjustStock(
   if ("error" in auth) return auth
   const managerId = auth.userId
 
+  const { getAppSettings } = await import("@/lib/settings/get-settings")
+  const settings = await getAppSettings()
+  if (!settings.manager_can_adjust_stock) {
+    return { error: "Stock adjustments are disabled for managers." }
+  }
+
   if (!note || note.trim().length === 0) {
     return { error: "A note is required for stock adjustments." }
   }

@@ -9,22 +9,19 @@ import {
 
 type ActionResult = { error?: string; paymentId?: string } | void
 
-/**
- * Records a payment against an order. Paid/due totals stay in sync via
- * `sync_order_paid_amount`. Prefer shared `recordOrderPayment` for new UI.
- */
-export async function recordPayment(
+export async function recordOrderPayment(
   values: RecordPaymentInput
 ): Promise<ActionResult> {
   const { user, role } = await getAuthedUser()
-  if (!user || role !== "manager") {
-    return { error: "You are not authorized to perform this action." }
+  if (!user || !role) return { error: "Not authorized." }
+  if (role !== "admin" && role !== "manager") {
+    return { error: "Not authorized." }
   }
 
   const parsed = recordPaymentSchema.safeParse(values)
   if (!parsed.success) {
-    return { error: "Please check the form and try again." }
+    return { error: parsed.error.issues[0]?.message ?? "Invalid payment." }
   }
 
-  return recordPaymentCore(parsed.data, user.id, "manager")
+  return recordPaymentCore(parsed.data, user.id, role)
 }

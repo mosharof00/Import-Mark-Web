@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { getAuthedUser } from "@/lib/auth/get-user"
 import { EmptyState } from "@/components/shared/empty-state"
 import { ErrorCard } from "@/components/shared/error-card"
-import type { OrderStatus } from "@/types"
+import type { OrderStatus, PaymentMode } from "@/types"
 
 import {
   OutstandingOrdersTable,
@@ -18,19 +18,31 @@ export async function OutstandingList() {
   const supabase = await createClient()
 
   try {
-    const { data: orders, error } = await supabase
-      .from("sales_orders")
-      .select(
-        "id, order_number, total_amount, paid_amount, due_amount, status, customers(full_name, company_name)"
-      )
-      .eq("created_by", user.id)
-      .gt("due_amount", 0)
-      .not("status", "in", "(rejected,cancelled)")
-      .order("due_amount", { ascending: false })
+    const [ordersRes, gatewaysRes] = await Promise.all([
+      supabase
+        .from("sales_orders")
+        .select(
+          "id, order_number, total_amount, paid_amount, due_amount, status, customers(full_name, company_name)"
+        )
+        .gt("due_amount", 0)
+        .not("status", "in", "(rejected,cancelled)")
+        .order("due_amount", { ascending: false }),
+      supabase
+        .from("payment_gateways")
+        .select("id, name, type")
+        .eq("status", "active")
+        .order("sort_order"),
+    ])
 
-    if (error) throw error
+    if (ordersRes.error) throw ordersRes.error
 
-    const rows: OutstandingOrderRow[] = (orders ?? []).map((o) => ({
+    const gateways = (gatewaysRes.data ?? []).map((g) => ({
+      id: g.id,
+      name: g.name,
+      type: g.type as PaymentMode,
+    }))
+
+    const rows: OutstandingOrderRow[] = (ordersRes.data ?? []).map((o) => ({
       id: o.id,
       orderNumber: o.order_number,
       customerName: o.customers?.full_name ?? "Unknown",
@@ -47,13 +59,13 @@ export async function OutstandingList() {
           <EmptyState
             icon={Wallet}
             title="All caught up"
-            description="None of your orders have an outstanding balance."
+            description="No orders have an outstanding balance."
           />
         </div>
       )
     }
 
-    return <OutstandingOrdersTable data={rows} />
+    return <OutstandingOrdersTable data={rows} gateways={gateways} />
   } catch {
     return <ErrorCard title="Couldn't load outstanding orders" />
   }

@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import Link from "next/link"
 import { Plus } from "lucide-react"
 import { toast } from "sonner"
 
-import { recordPayment } from "@/app/(manager)/manager/payments/actions"
+import { recordOrderPayment } from "@/lib/payments/actions"
 import type { RecordPaymentInput } from "@/lib/validations/payment"
+import { ImageUpload } from "@/components/shared/image-upload"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { formatTaka } from "@/lib/format"
+import { removeImageAtUrl } from "@/lib/storage"
 import type { PaymentMode } from "@/types"
 
 const PAYMENT_MODES: { value: PaymentMode; label: string }[] = [
@@ -42,16 +43,47 @@ export type RecordPaymentOrder = {
   dueAmount: number
 }
 
-export function RecordPaymentDialog({ order }: { order: RecordPaymentOrder }) {
+export type GatewayOption = {
+  id: string
+  name: string
+  type: PaymentMode
+}
+
+export function RecordPaymentDialog({
+  order,
+  gateways = [],
+  triggerLabel = "Record payment",
+}: {
+  order: RecordPaymentOrder
+  gateways?: GatewayOption[]
+  triggerLabel?: string
+}) {
   const [open, setOpen] = useState(false)
   const [amount, setAmount] = useState(String(order.dueAmount))
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("cash")
+  const [paymentGatewayId, setPaymentGatewayId] = useState("")
   const [paymentDate, setPaymentDate] = useState(
     new Date().toISOString().slice(0, 10)
   )
   const [referenceNo, setReferenceNo] = useState("")
   const [notes, setNotes] = useState("")
+  const [proofImageUrl, setProofImageUrl] = useState("")
   const [isPending, startTransition] = useTransition()
+
+  function resetForm() {
+    setAmount(String(order.dueAmount))
+    setPaymentMode("cash")
+    setPaymentGatewayId("")
+    setReferenceNo("")
+    setNotes("")
+    setProofImageUrl("")
+  }
+
+  async function discardProof() {
+    if (!proofImageUrl) return
+    await removeImageAtUrl(proofImageUrl)
+    setProofImageUrl("")
+  }
 
   function handleSubmit() {
     const parsedAmount = Number(amount)
@@ -60,48 +92,60 @@ export function RecordPaymentDialog({ order }: { order: RecordPaymentOrder }) {
       return
     }
 
+    const selectedGateway = gateways.find((g) => g.id === paymentGatewayId)
     const payload: RecordPaymentInput = {
       orderId: order.orderId,
       amount: parsedAmount,
-      paymentMode,
+      paymentMode: selectedGateway?.type ?? paymentMode,
       paymentDate,
+      paymentGatewayId: paymentGatewayId || null,
       referenceNo: referenceNo || undefined,
       notes: notes || undefined,
+      proofImageUrl: proofImageUrl || null,
     }
 
     startTransition(async () => {
-      const result = await recordPayment(payload)
-      if (result?.error) {
+      const result = await recordOrderPayment(payload)
+      if (result && "error" in result && result.error) {
         toast.error(result.error)
         return
       }
       toast.success("Payment recorded.")
+      resetForm()
       setOpen(false)
-      setReferenceNo("")
-      setNotes("")
     })
   }
 
+  if (order.dueAmount <= 0) return null
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && proofImageUrl && !isPending) {
+          void discardProof()
+        }
+        setOpen(next)
+      }}
+    >
       <DialogTrigger
         render={
           <Button size="sm" className="rounded-full px-4">
             <Plus className="size-3.5" />
-            Record
+            {triggerLabel}
           </Button>
         }
       />
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Record payment</DialogTitle>
           <DialogDescription>
-            Log a customer payment for {order.orderNumber ?? "this order"} (
+            Log a payment for {order.orderNumber ?? "this order"} (
             {order.customerName}). Due: {formatTaka(order.dueAmount)}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="amount">
               Amount (৳)
@@ -117,6 +161,31 @@ export function RecordPaymentDialog({ order }: { order: RecordPaymentOrder }) {
             />
           </div>
 
+          {gateways.length > 0 ? (
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="gateway">
+                Payment gateway (optional)
+              </label>
+              <select
+                id="gateway"
+                className={selectClassName}
+                value={paymentGatewayId}
+                onChange={(e) => {
+                  setPaymentGatewayId(e.target.value)
+                  const gateway = gateways.find((g) => g.id === e.target.value)
+                  if (gateway) setPaymentMode(gateway.type)
+                }}
+              >
+                <option value="">Use payment mode only</option>
+                {gateways.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="paymentMode">
               Payment mode
@@ -126,6 +195,7 @@ export function RecordPaymentDialog({ order }: { order: RecordPaymentOrder }) {
               className={selectClassName}
               value={paymentMode}
               onChange={(e) => setPaymentMode(e.target.value as PaymentMode)}
+              disabled={Boolean(paymentGatewayId)}
             >
               {PAYMENT_MODES.map((m) => (
                 <option key={m.value} value={m.value}>
@@ -161,19 +231,27 @@ export function RecordPaymentDialog({ order }: { order: RecordPaymentOrder }) {
 
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="notes">
-              Notes (optional)
+              Reason / notes (optional)
             </label>
             <textarea
               id="notes"
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className={cn(
-                selectClassName,
-                "h-auto min-h-[72px] py-2"
-              )}
+              placeholder="Why this payment is being recorded…"
+              className={cn(selectClassName, "h-auto min-h-[72px] py-2")}
             />
           </div>
+
+          <ImageUpload
+            kind="payment"
+            orderId={order.orderId}
+            label="Receipt / cheque photo (optional)"
+            description="Upload a bank cheque, transfer receipt, or other payment proof."
+            value={proofImageUrl || null}
+            onChange={setProofImageUrl}
+            deleteOnRemove
+          />
         </div>
 
         <DialogFooter>

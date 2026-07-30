@@ -15,12 +15,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { ImageUpload } from "@/components/shared/image-upload"
 import { ORDER_STATUS_CONFIG } from "@/lib/constants"
 import {
   advanceOrderStatus,
   markOrderDelivered,
 } from "@/lib/orders/order-status-actions"
 import { getNextOrderStatus } from "@/lib/orders/status-flow"
+import { removeImageAtUrl } from "@/lib/storage"
 import type { DeliveryMethod, OrderStatus } from "@/types"
 
 export function OrderFulfillmentActions({
@@ -34,6 +36,7 @@ export function OrderFulfillmentActions({
 }) {
   const nextStatus = getNextOrderStatus(status, deliveryMethod)
   const [note, setNote] = useState("")
+  const [deliveryImageUrl, setDeliveryImageUrl] = useState("")
   const [open, setOpen] = useState(false)
   const [deliverOpen, setDeliverOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -43,32 +46,83 @@ export function OrderFulfillmentActions({
   const nextLabel = ORDER_STATUS_CONFIG[nextStatus].label
   const currentLabel = ORDER_STATUS_CONFIG[status].label
   const canSkipToDelivered = nextStatus !== "delivered"
+  const advancingToDelivered = nextStatus === "delivered"
+
+  async function discardDeliveryImage() {
+    if (!deliveryImageUrl) return
+    await removeImageAtUrl(deliveryImageUrl)
+    setDeliveryImageUrl("")
+  }
+
+  function resetForm() {
+    setNote("")
+    setDeliveryImageUrl("")
+  }
 
   function handleAdvance() {
     startTransition(async () => {
-      const result = await advanceOrderStatus(orderId, note)
+      const result = await advanceOrderStatus(
+        orderId,
+        note,
+        advancingToDelivered ? deliveryImageUrl || null : null
+      )
       if (result?.error) {
         toast.error(result.error)
         return
       }
       toast.success(`Order marked as ${nextLabel.toLowerCase()}.`)
-      setNote("")
+      resetForm()
       setOpen(false)
     })
   }
 
   function handleDeliver() {
     startTransition(async () => {
-      const result = await markOrderDelivered(orderId, note)
+      const result = await markOrderDelivered(
+        orderId,
+        note,
+        deliveryImageUrl || null
+      )
       if (result?.error) {
         toast.error(result.error)
         return
       }
       toast.success("Order marked as delivered.")
-      setNote("")
+      resetForm()
       setDeliverOpen(false)
     })
   }
+
+  const deliveryFields = (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <label
+          htmlFor={`deliver-note-${orderId}`}
+          className="text-sm font-medium"
+        >
+          Note (optional)
+        </label>
+        <textarea
+          id={`deliver-note-${orderId}`}
+          rows={3}
+          className="border-input bg-background w-full rounded-lg border px-3 py-2 text-sm"
+          placeholder="Add a delivery note…"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+        />
+      </div>
+      <ImageUpload
+        kind="delivery"
+        orderId={orderId}
+        label="Delivery photo (optional)"
+        description="Upload a proof-of-delivery photo. Stored under deliveries/ in storage."
+        value={deliveryImageUrl || null}
+        onChange={setDeliveryImageUrl}
+        deleteOnRemove
+        className="max-w-full"
+      />
+    </div>
+  )
 
   return (
     <div className="border-border bg-card rounded-2xl border p-4 shadow-sm">
@@ -79,7 +133,15 @@ export function OrderFulfillmentActions({
       </p>
 
       <div className="flex flex-wrap gap-2">
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog
+          open={open}
+          onOpenChange={(next) => {
+            if (!next && deliveryImageUrl && !isPending) {
+              void discardDeliveryImage()
+            }
+            setOpen(next)
+          }}
+        >
           <DialogTrigger
             render={
               <Button className="rounded-full" disabled={isPending}>
@@ -88,7 +150,7 @@ export function OrderFulfillmentActions({
               </Button>
             }
           />
-          <DialogContent>
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>Update order status?</DialogTitle>
               <DialogDescription>
@@ -96,22 +158,26 @@ export function OrderFulfillmentActions({
                 {nextLabel.toLowerCase()}.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-2">
-              <label
-                htmlFor={`fulfillment-note-${orderId}`}
-                className="text-sm font-medium"
-              >
-                Note (optional)
-              </label>
-              <textarea
-                id={`fulfillment-note-${orderId}`}
-                rows={3}
-                className="border-input bg-background w-full rounded-lg border px-3 py-2 text-sm"
-                placeholder="Add a note for the status history…"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-              />
-            </div>
+            {advancingToDelivered ? (
+              deliveryFields
+            ) : (
+              <div className="space-y-2">
+                <label
+                  htmlFor={`fulfillment-note-${orderId}`}
+                  className="text-sm font-medium"
+                >
+                  Note (optional)
+                </label>
+                <textarea
+                  id={`fulfillment-note-${orderId}`}
+                  rows={3}
+                  className="border-input bg-background w-full rounded-lg border px-3 py-2 text-sm"
+                  placeholder="Add a note for the status history…"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                />
+              </div>
+            )}
             <DialogFooter>
               <DialogClose
                 render={
@@ -132,7 +198,15 @@ export function OrderFulfillmentActions({
         </Dialog>
 
         {canSkipToDelivered ? (
-          <Dialog open={deliverOpen} onOpenChange={setDeliverOpen}>
+          <Dialog
+            open={deliverOpen}
+            onOpenChange={(next) => {
+              if (!next && deliveryImageUrl && !isPending) {
+                void discardDeliveryImage()
+              }
+              setDeliverOpen(next)
+            }}
+          >
             <DialogTrigger
               render={
                 <Button
@@ -145,31 +219,16 @@ export function OrderFulfillmentActions({
                 </Button>
               }
             />
-            <DialogContent>
+            <DialogContent className="sm:max-w-lg">
               <DialogHeader>
                 <DialogTitle>Mark order as delivered?</DialogTitle>
                 <DialogDescription>
                   This completes the order immediately, skipping any remaining
-                  fulfillment steps. Stock reservation and delivery timestamps
-                  will be applied.
+                  fulfillment steps. You can add an optional note and delivery
+                  photo.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-2">
-                <label
-                  htmlFor={`deliver-note-${orderId}`}
-                  className="text-sm font-medium"
-                >
-                  Note (optional)
-                </label>
-                <textarea
-                  id={`deliver-note-${orderId}`}
-                  rows={3}
-                  className="border-input bg-background w-full rounded-lg border px-3 py-2 text-sm"
-                  placeholder="Add a delivery note…"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                />
-              </div>
+              {deliveryFields}
               <DialogFooter>
                 <DialogClose
                   render={

@@ -17,13 +17,15 @@ import {
 import { cn } from "@/lib/utils"
 
 type ImageUploadBaseProps = {
-  kind: "user" | "product" | "brand"
+  kind: "user" | "product" | "brand" | "delivery" | "payment"
   label?: string
   description?: string
   className?: string
   disabled?: boolean
   /** Required for profile photos (`users/` folder). */
   userId?: string
+  /** Required for delivery / payment proof photos. */
+  orderId?: string
   /** Product or brand name — used for the storage filename. */
   preferredName?: string
   showUrlField?: boolean
@@ -51,11 +53,21 @@ function buildPathInput(
   filename: string,
   sequence: number
 ): StoragePathInput | null {
-  const { kind, userId, preferredName } = props
+  const { kind, userId, preferredName, orderId } = props
 
   if (kind === "user") {
     if (!userId) return null
     return { kind: "user", userId, originalFilename: filename }
+  }
+
+  if (kind === "delivery") {
+    if (!orderId) return null
+    return { kind: "delivery", orderId, originalFilename: filename }
+  }
+
+  if (kind === "payment") {
+    if (!orderId) return null
+    return { kind: "payment", orderId, originalFilename: filename }
   }
 
   if (!preferredName?.trim()) {
@@ -151,7 +163,9 @@ export function ImageUpload(props: ImageUploadProps) {
           toast.error(
             kind === "user"
               ? "User id is required."
-              : "Enter a name first — it is used for the image filename."
+              : kind === "delivery" || kind === "payment"
+                ? "Order id is required."
+                : "Enter a name first — it is used for the image filename."
           )
           setUploading(false)
           return
@@ -251,7 +265,10 @@ export function ImageUpload(props: ImageUploadProps) {
             <p className="text-muted-foreground mt-1 text-xs">
               or click to browse · JPEG, PNG, WebP, GIF
             </p>
-            {!preferredName?.trim() && kind !== "user" ? (
+            {!preferredName?.trim() &&
+            kind !== "user" &&
+            kind !== "delivery" &&
+            kind !== "payment" ? (
               <p className="text-amber-600 mt-2 text-xs dark:text-amber-400">
                 Enter the {kind} name above before uploading.
               </p>
@@ -275,24 +292,29 @@ export function ImageUpload(props: ImageUploadProps) {
       ) : null}
 
       {urls.length > 0 ? (
-        <ul className="space-y-3">
+        <ul className="max-w-full space-y-3 overflow-hidden">
           {urls.map((url) => (
             <li
               key={url}
-              className="border-border bg-card flex flex-col gap-3 rounded-2xl border p-3 shadow-sm sm:flex-row sm:items-center"
+              className="border-border bg-card flex max-w-full items-center gap-3 overflow-hidden rounded-2xl border p-3 shadow-sm"
             >
-              <div className="bg-muted relative size-20 shrink-0 overflow-hidden rounded-xl">
+              <div className="bg-muted relative size-16 shrink-0 overflow-hidden rounded-xl sm:size-20">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={url} alt="" className="size-full object-cover" />
               </div>
-              <div className="min-w-0 flex-1 space-y-2">
+              <div className="min-w-0 flex-1 overflow-hidden">
                 {showUrlField ? (
-                  <div className="flex gap-2">
-                    <Input value={url} readOnly className="font-mono text-xs" />
+                  <div className="flex min-w-0 gap-2">
+                    <Input
+                      value={url}
+                      readOnly
+                      className="min-w-0 flex-1 font-mono text-xs"
+                    />
                     <Button
                       type="button"
                       variant="outline"
                       size="icon"
+                      className="shrink-0"
                       onClick={() => copyToClipboard(url)}
                       aria-label="Copy image URL"
                     >
@@ -300,18 +322,24 @@ export function ImageUpload(props: ImageUploadProps) {
                     </Button>
                   </div>
                 ) : (
-                  <p className="text-muted-foreground truncate text-xs">{url}</p>
+                  <p
+                    className="text-muted-foreground truncate text-xs"
+                    title={url}
+                  >
+                    {url.split("/").pop() ?? url}
+                  </p>
                 )}
               </div>
               <Button
                 type="button"
                 variant="destructive"
-                size="sm"
+                size="icon"
+                className="shrink-0"
                 onClick={() => void removeUrl(url)}
                 disabled={disabled || uploading}
+                aria-label="Remove image"
               >
                 <Trash2 />
-                Remove
               </Button>
             </li>
           ))}

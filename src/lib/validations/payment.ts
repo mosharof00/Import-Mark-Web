@@ -17,8 +17,10 @@ export const recordPaymentSchema = z.object({
     error: "Select a payment mode.",
   }),
   paymentDate: z.string().min(1, "Payment date is required."),
+  paymentGatewayId: z.string().uuid().optional().nullable(),
   referenceNo: z.string().optional(),
   notes: z.string().optional(),
+  proofImageUrl: z.string().url().optional().nullable().or(z.literal("")),
 })
 
 export type RecordPaymentInput = z.infer<typeof recordPaymentSchema>

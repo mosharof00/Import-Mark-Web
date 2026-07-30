@@ -17,6 +17,12 @@ export const placeOrderSchema = z
     paymentGatewayId: z.string().uuid("Select a payment gateway."),
     advancePaid: z.number().min(0, "Advance paid cannot be negative."),
     paymentReference: z.string().optional(),
+    advanceProofImageUrl: z
+      .string()
+      .url()
+      .optional()
+      .nullable()
+      .or(z.literal("")),
     orderNotes: z.string().optional(),
   })
   .refine(

@@ -37,7 +37,7 @@ const CATEGORY_KEYS: Record<
     "customer_show_stock_quantity",
     "landing_show_product_prices",
   ],
-  inventory: ["stock_reserve_on"],
+  inventory: ["stock_reserve_on", "manager_can_adjust_stock"],
 }
 
 async function requireAdmin() {

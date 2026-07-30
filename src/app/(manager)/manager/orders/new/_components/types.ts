@@ -73,5 +73,6 @@ export type WizardState = {
   paymentGatewayId: string | null
   advancePaid: number
   paymentReference: string
+  advanceProofImageUrl: string
   orderNotes: string
 }

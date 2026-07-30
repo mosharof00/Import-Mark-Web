@@ -24,6 +24,7 @@ const LABELS: Record<string, string> = {
   customer_auto_activate_on_signup: "Auto-activate new customers",
   manager_can_activate_customers: "Manager can activate customers",
   stock_reserve_on: "Reserve stock when order reaches",
+  manager_can_adjust_stock: "Manager can adjust stock quantity",
 }
 
 function formatValue(key: string, value: unknown): string {
@@ -55,7 +56,7 @@ const CATEGORY_KEYS: Record<string, string[]> = {
     "customer_show_stock_quantity",
     "landing_show_product_prices",
   ],
-  inventory: ["stock_reserve_on"],
+  inventory: ["stock_reserve_on", "manager_can_adjust_stock"],
 }
 
 export default async function ManagerSettingsPage() {

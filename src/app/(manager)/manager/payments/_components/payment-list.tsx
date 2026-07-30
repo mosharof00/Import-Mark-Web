@@ -15,33 +15,14 @@ export async function PaymentList() {
   const supabase = await createClient()
 
   try {
-    const { data: orders, error: ordersError } = await supabase
-      .from("sales_orders")
-      .select("id")
-      .eq("created_by", user.id)
-
-    if (ordersError) throw ordersError
-
-    const orderIds = (orders ?? []).map((o) => o.id)
-    if (orderIds.length === 0) {
-      return (
-        <div className="border-border bg-card rounded-2xl border p-6 shadow-sm">
-          <EmptyState
-            icon={CreditCard}
-            title="No payments yet"
-            description="Payments you record against your orders will appear here."
-          />
-        </div>
-      )
-    }
-
     const { data: payments, error } = await supabase
       .from("payments")
       .select(
-        "id, amount, payment_mode, payment_date, reference_no, notes, created_at, order_id, sales_orders(order_number, customers(full_name, company_name))"
+        "id, amount, payment_mode, payment_date, reference_no, notes, proof_image_url, created_at, order_id, payment_gateways(name), sales_orders(order_number, customers(full_name, company_name))"
       )
-      .in("order_id", orderIds)
       .order("payment_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(100)
 
     if (error) throw error
 
@@ -52,6 +33,8 @@ export async function PaymentList() {
       paymentDate: p.payment_date,
       referenceNo: p.reference_no,
       notes: p.notes,
+      proofImageUrl: p.proof_image_url,
+      gatewayName: p.payment_gateways?.name ?? null,
       createdAt: p.created_at,
       orderId: p.order_id,
       orderNumber: p.sales_orders?.order_number ?? null,
@@ -65,7 +48,7 @@ export async function PaymentList() {
           <EmptyState
             icon={CreditCard}
             title="No payments yet"
-            description="Payments you record against your orders will appear here."
+            description="Payments recorded against orders will appear here."
           />
         </div>
       )

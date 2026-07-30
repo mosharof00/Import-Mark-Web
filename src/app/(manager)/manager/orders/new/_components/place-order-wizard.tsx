@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
-import { placeOrder } from "@/app/(manager)/manager/orders/actions"
+import { placeOrder as defaultPlaceOrder } from "@/app/(manager)/manager/orders/actions"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -41,6 +41,7 @@ const INITIAL_STATE: Omit<WizardState, "step" | "direction"> = {
   paymentGatewayId: null,
   advancePaid: 0,
   paymentReference: "",
+  advanceProofImageUrl: "",
   orderNotes: "",
 }
 
@@ -50,12 +51,22 @@ export function PlaceOrderWizard({
   categories,
   addresses: initialAddresses,
   gateways,
+  placeOrderAction,
+  createAddressAction,
+  ordersBasePath = "/manager/orders",
 }: {
   customers: WizardCustomer[]
   products: WizardProduct[]
   categories: CategoryOption[]
   addresses: WizardAddress[]
   gateways: WizardGateway[]
+  placeOrderAction?: (
+    values: import("@/lib/validations/order").PlaceOrderInput
+  ) => Promise<{ error?: string; orderId?: string }>
+  createAddressAction?: (
+    values: import("@/lib/validations/customer-address").CreateCustomerAddressInput
+  ) => Promise<{ error?: string; addressId?: string } | void>
+  ordersBasePath?: string
 }) {
   const router = useRouter()
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
@@ -72,6 +83,7 @@ export function PlaceOrderWizard({
     state.paymentGatewayId !== null ||
     state.advancePaid > 0 ||
     state.paymentReference.trim().length > 0 ||
+    state.advanceProofImageUrl.trim().length > 0 ||
     state.orderNotes.trim().length > 0
 
   const subtotal = useMemo(
@@ -137,7 +149,8 @@ export function PlaceOrderWizard({
     }
 
     startTransition(async () => {
-      const result = await placeOrder({
+      const submit = placeOrderAction ?? defaultPlaceOrder
+      const result = await submit({
         customerId: state.customerId!,
         items: state.cart.map((item) => ({
           productId: item.productId,
@@ -150,6 +163,7 @@ export function PlaceOrderWizard({
         paymentGatewayId: state.paymentGatewayId!,
         advancePaid: state.advancePaid,
         paymentReference: state.paymentReference || undefined,
+        advanceProofImageUrl: state.advanceProofImageUrl || undefined,
         orderNotes: state.orderNotes || undefined,
       })
 
@@ -159,7 +173,7 @@ export function PlaceOrderWizard({
       }
 
       if (result.orderId) {
-        router.push(`/manager/orders/${result.orderId}?placed=1`)
+        router.push(`${ordersBasePath}/${result.orderId}?placed=1`)
       }
     })
   }
@@ -169,7 +183,7 @@ export function PlaceOrderWizard({
   }
 
   function handleLeave() {
-    router.push("/manager/orders")
+    router.push(ordersBasePath)
   }
 
   function requestLeave() {
@@ -258,6 +272,7 @@ export function PlaceOrderWizard({
             paymentGatewayId={state.paymentGatewayId}
             advancePaid={state.advancePaid}
             paymentReference={state.paymentReference}
+            advanceProofImageUrl={state.advanceProofImageUrl}
             orderNotes={state.orderNotes}
             onDeliveryMethodChange={(deliveryMethod) =>
               setState((s) => ({
@@ -280,9 +295,13 @@ export function PlaceOrderWizard({
             onPaymentReferenceChange={(paymentReference) =>
               setState((s) => ({ ...s, paymentReference }))
             }
+            onAdvanceProofImageUrlChange={(advanceProofImageUrl) =>
+              setState((s) => ({ ...s, advanceProofImageUrl }))
+            }
             onOrderNotesChange={(orderNotes) =>
               setState((s) => ({ ...s, orderNotes }))
             }
+            createAddress={createAddressAction}
           />
         ) : null}
 

@@ -12,6 +12,9 @@ import type { DeliveryMethod, OrderStatus, PaymentMode } from "@/types"
 
 import { OrderActions } from "./order-actions"
 import { OrderFulfillmentActions } from "@/components/shared/order-fulfillment-actions"
+import { PaymentHistory } from "@/components/shared/payments/payment-history"
+import { RecordPaymentDialog } from "@/components/shared/payments/record-payment-dialog"
+import { getOrderPaymentHistory } from "@/lib/payments/get-payment-history"
 
 const DELIVERY_LABEL: Record<DeliveryMethod, string> = {
   own_team: "Own delivery team",
@@ -58,7 +61,7 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
   const { data: order, error } = await supabase
     .from("sales_orders")
     .select(
-      "id, order_number, status, subtotal, discount_amount, total_amount, paid_amount, due_amount, delivery_method, address_id, payment_gateway_id, payment_mode, payment_note, notes, rejection_note, created_at, updated_at, approved_at, delivered_at, dispatched_at, created_by, approved_by, customer_id, customers(full_name, company_name, phone, email), customer_addresses(label, recipient_name, recipient_phone, address_line_1, address_line_2, city, state_province, postal_code, country), payment_gateways(name, type, account_name, account_number, bank_name, instructions)"
+      "id, order_number, status, subtotal, discount_amount, total_amount, paid_amount, due_amount, delivery_method, address_id, payment_gateway_id, payment_mode, payment_note, notes, rejection_note, created_at, updated_at, approved_at, delivered_at, delivery_image_url, dispatched_at, created_by, approved_by, customer_id, customers(full_name, company_name, phone, email), customer_addresses(label, recipient_name, recipient_phone, address_line_1, address_line_2, city, state_province, postal_code, country), payment_gateways(name, type, account_name, account_number, bank_name, instructions)"
     )
     .eq("id", orderId)
     .single()
@@ -70,7 +73,8 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
     historyRes,
     managerRes,
     approverRes,
-    paymentsRes,
+    payments,
+    gatewaysRes,
   ] = await Promise.all([
     supabase
       .from("order_items")
@@ -96,16 +100,21 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
           .eq("id", order.approved_by)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
+    getOrderPaymentHistory(orderId),
     supabase
-      .from("payments")
-      .select("amount, payment_mode, payment_date, reference_no, notes")
-      .eq("order_id", orderId)
-      .order("payment_date", { ascending: false }),
+      .from("payment_gateways")
+      .select("id, name, type")
+      .eq("status", "active")
+      .order("sort_order"),
   ])
 
   const items = itemsRes.data ?? []
   const history = historyRes.data ?? []
-  const payments = paymentsRes.data ?? []
+  const gateways = (gatewaysRes.data ?? []).map((g) => ({
+    id: g.id,
+    name: g.name,
+    type: g.type as PaymentMode,
+  }))
   const status = order.status as OrderStatus
   const dueAmount = order.due_amount ?? 0
   const itemCount = items.length
@@ -312,42 +321,23 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
             )}
           </DetailCard>
 
-          {payments.length > 0 ? (
-            <DetailCard title="Payments recorded">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-sm">
-                  <thead>
-                    <tr className="text-muted-foreground text-left text-xs tracking-wider uppercase">
-                      <th className="px-2 py-2 font-medium">Date</th>
-                      <th className="px-2 py-2 font-medium">Mode</th>
-                      <th className="px-2 py-2 text-right font-medium">
-                        Amount
-                      </th>
-                      <th className="px-2 py-2 font-medium">Reference</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {payments.map((p, i) => (
-                      <tr key={i} className="border-border border-t">
-                        <td className="text-muted-foreground px-2 py-3 whitespace-nowrap">
-                          {formatDate(p.payment_date)}
-                        </td>
-                        <td className="text-foreground px-2 py-3 whitespace-nowrap">
-                          {PAYMENT_LABEL[p.payment_mode]}
-                        </td>
-                        <td className="text-foreground px-2 py-3 text-right font-medium tabular-nums">
-                          {formatTaka(p.amount)}
-                        </td>
-                        <td className="text-muted-foreground px-2 py-3">
-                          {p.reference_no ?? p.notes ?? "—"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </DetailCard>
+          {dueAmount > 0 &&
+          status !== "rejected" &&
+          status !== "cancelled" ? (
+            <div className="flex justify-end">
+              <RecordPaymentDialog
+                order={{
+                  orderId: order.id,
+                  orderNumber: order.order_number,
+                  customerName: order.customers?.full_name ?? "Customer",
+                  dueAmount,
+                }}
+                gateways={gateways}
+              />
+            </div>
           ) : null}
+
+          <PaymentHistory payments={payments} />
         </div>
 
         <div className="space-y-6">
@@ -399,6 +389,26 @@ export async function OrderDetail({ orderId }: { orderId: string }) {
                 }
               />
             </div>
+            {order.delivery_image_url ? (
+              <div className="mt-4 space-y-2">
+                <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
+                  Delivery photo
+                </p>
+                <a
+                  href={order.delivery_image_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="bg-muted block overflow-hidden rounded-xl"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={order.delivery_image_url}
+                    alt="Delivery proof"
+                    className="max-h-72 w-full object-contain"
+                  />
+                </a>
+              </div>
+            ) : null}
           </DetailCard>
 
           <DetailCard title="Payment">

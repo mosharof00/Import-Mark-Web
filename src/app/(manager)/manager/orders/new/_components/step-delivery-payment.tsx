@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { ImageUpload } from "@/components/shared/image-upload"
 import { cn } from "@/lib/utils"
 import { formatCustomerAddress } from "@/lib/format-address"
 import { formatTaka } from "@/lib/format"
@@ -40,6 +41,7 @@ export function StepDeliveryPayment({
   paymentGatewayId,
   advancePaid,
   paymentReference,
+  advanceProofImageUrl,
   orderNotes,
   onDeliveryMethodChange,
   onAddressIdChange,
@@ -47,8 +49,10 @@ export function StepDeliveryPayment({
   onPaymentGatewayIdChange,
   onAdvancePaidChange,
   onPaymentReferenceChange,
+  onAdvanceProofImageUrlChange,
   onOrderNotesChange,
   createAddress = defaultCreateAddress,
+  showAdvanceProof = true,
 }: {
   customerId: string
   addresses: WizardAddress[]
@@ -59,6 +63,7 @@ export function StepDeliveryPayment({
   paymentGatewayId: string | null
   advancePaid: number
   paymentReference: string
+  advanceProofImageUrl: string
   orderNotes: string
   onDeliveryMethodChange: (method: DeliveryMethod) => void
   onAddressIdChange: (id: string | null) => void
@@ -66,10 +71,12 @@ export function StepDeliveryPayment({
   onPaymentGatewayIdChange: (id: string) => void
   onAdvancePaidChange: (amount: number) => void
   onPaymentReferenceChange: (value: string) => void
+  onAdvanceProofImageUrlChange: (value: string) => void
   onOrderNotesChange: (value: string) => void
   createAddress?: (
     values: CreateCustomerAddressInput
   ) => Promise<{ error?: string; addressId?: string } | void>
+  showAdvanceProof?: boolean
 }) {
   const [showAddressForm, setShowAddressForm] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -464,6 +471,18 @@ export function StepDeliveryPayment({
             />
           </div>
         </div>
+
+        {showAdvanceProof && advancePaid > 0 ? (
+          <ImageUpload
+            kind="payment"
+            orderId={customerId}
+            label="Advance payment proof (optional)"
+            description="Upload a cheque, bank slip, or receipt for the advance payment."
+            value={advanceProofImageUrl || null}
+            onChange={onAdvanceProofImageUrlChange}
+            deleteOnRemove
+          />
+        ) : null}
 
         <div>
           <Label htmlFor="order-notes">Order notes</Label>
