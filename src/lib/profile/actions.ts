@@ -11,8 +11,8 @@ import {
   storageUrlsToDelete,
 } from "@/lib/storage/cleanup"
 import {
-  setPasswordSchema,
-  type SetPasswordInput,
+  changePasswordWithOtpSchema,
+  type ChangePasswordWithOtpInput,
 } from "@/lib/validations/auth"
 import {
   updateProfileSchema,
@@ -142,18 +142,48 @@ export async function updateProfile(
   return { success: "Profile updated successfully." }
 }
 
+export async function requestChangePasswordOtp(): Promise<ActionResult> {
+  const auth = await requireAuthedRole()
+  if ("error" in auth) return auth
+
+  const email = auth.user.email
+  if (!email) return { error: "Your account has no email address." }
+
+  const supabase = await createClient()
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${siteUrl}/auth/confirm?next=/reset-password`,
+  })
+
+  if (error) return { error: error.message }
+  return { success: "Verification code sent to your email." }
+}
+
 export async function changePassword(
-  values: SetPasswordInput
+  values: ChangePasswordWithOtpInput
 ): Promise<ActionResult> {
   const auth = await requireAuthedRole()
   if ("error" in auth) return auth
 
-  const parsed = setPasswordSchema.safeParse(values)
+  const parsed = changePasswordWithOtpSchema.safeParse(values)
   if (!parsed.success) {
-    return { error: "Please check the form and try again." }
+    return { error: parsed.error.issues[0]?.message ?? "Please check the form." }
   }
 
+  const email = auth.user.email
+  if (!email) return { error: "Your account has no email address." }
+
   const supabase = await createClient()
+  const { data, error: otpError } = await supabase.auth.verifyOtp({
+    email,
+    token: parsed.data.token,
+    type: "recovery",
+  })
+
+  if (otpError || !data.user) {
+    return { error: otpError?.message ?? "Invalid or expired verification code." }
+  }
+
   const { error } = await supabase.auth.updateUser({
     password: parsed.data.password,
   })

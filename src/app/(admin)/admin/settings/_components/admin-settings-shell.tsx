@@ -82,9 +82,11 @@ function toCurrencyInput(currency: PlatformCurrency): CurrencyInput {
 export function AdminSettingsShell({
   settings,
   currency,
+  email,
 }: {
   settings: AppSettings
   currency: PlatformCurrency
+  email: string
 }) {
   const [activeTab, setActiveTab] = useState<SettingCategory>("general")
   const [pendingTab, setPendingTab] = useState<SettingCategory | null>(null)
@@ -396,7 +398,9 @@ export function AdminSettingsShell({
           </div>
         ) : null}
 
-        {activeTab === "security" ? <ChangePasswordForm /> : null}
+        {activeTab === "security" ? (
+          <ChangePasswordForm email={email} />
+        ) : null}
 
         {activeTab !== "security" ? (
           <div className="mt-8 flex justify-end">

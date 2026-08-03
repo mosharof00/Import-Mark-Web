@@ -12,7 +12,7 @@ export default async function LoginPage({
   return (
     <LoginForm
       justRegistered={params.registered === "1"}
-      hadError={Boolean(params.error)}
+      errorCode={params.error ?? null}
       showRegistration={public_customer_registration}
       nextPath={params.next ?? null}
     />

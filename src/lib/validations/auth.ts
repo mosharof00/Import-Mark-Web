@@ -47,6 +47,23 @@ export const setPasswordSchema = z
   })
 export type SetPasswordInput = z.infer<typeof setPasswordSchema>
 
+export const changePasswordWithOtpSchema = z
+  .object({
+    password: z.string().min(8, "Password must be at least 8 characters."),
+    confirmPassword: z.string(),
+    token: z
+      .string()
+      .min(6, "Enter the 6-digit code.")
+      .max(6, "Enter the 6-digit code."),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match.",
+    path: ["confirmPassword"],
+  })
+export type ChangePasswordWithOtpInput = z.infer<
+  typeof changePasswordWithOtpSchema
+>
+
 export const forgotPasswordSchema = z.object({
   email: z.string().email("Enter a valid email address."),
 })

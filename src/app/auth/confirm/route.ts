@@ -3,20 +3,33 @@ import type { EmailOtpType } from "@supabase/supabase-js"
 
 import { createClient } from "@/lib/supabase/server"
 
+function safeNextPath(next: string | null, fallback: string) {
+  if (!next || !next.startsWith("/") || next.startsWith("//")) {
+    return fallback
+  }
+  return next
+}
+
 /**
- * Handles links that arrive from Supabase auth emails (email confirmation and
- * password recovery). Supports both styles:
- *  - PKCE links carrying a `code` -> exchangeCodeForSession
- *  - OTP links carrying `token_hash` + `type` -> verifyOtp
+ * Handles links from Supabase auth emails (invite, confirm, recovery).
+ * Supports:
+ *  - PKCE `code` → exchangeCodeForSession
+ *  - `token_hash` + `type` → verifyOtp
  *
- * On success it establishes a session (cookies) and redirects to `next`.
+ * Invite Accept button should link here with:
+ *   /auth/confirm?token_hash=...&type=invite&next=/set-password
+ *
+ * Must stay reachable without a session (see middleware `/auth` allowlist).
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const tokenHash = searchParams.get("token_hash")
   const type = searchParams.get("type") as EmailOtpType | null
   const code = searchParams.get("code")
-  const next = searchParams.get("next") ?? "/"
+
+  const defaultNext =
+    type === "invite" || type === "signup" ? "/set-password" : "/"
+  const next = safeNextPath(searchParams.get("next"), defaultNext)
 
   const supabase = await createClient()
 
@@ -26,15 +39,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${origin}${next}`)
     }
   } else if (tokenHash && type) {
-    const { error } = await supabase.auth.verifyOtp({
+    let { error } = await supabase.auth.verifyOtp({
       type,
       token_hash: tokenHash,
     })
+
+    // Invites occasionally verify under signup depending on project settings.
+    if (error && type === "invite") {
+      ;({ error } = await supabase.auth.verifyOtp({
+        type: "signup",
+        token_hash: tokenHash,
+      }))
+    }
+
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`)
     }
+
+    if (type === "invite") {
+      return NextResponse.redirect(`${origin}/login?error=invite_invalid`)
+    }
   }
 
-  // Verification failed or required params missing.
   return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`)
 }

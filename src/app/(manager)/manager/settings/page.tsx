@@ -1,5 +1,6 @@
 import { PageHeader } from "@/components/shared/page-header"
 import { getAppSettings } from "@/lib/settings/get-settings"
+import { requireRole } from "@/lib/auth/get-user"
 import {
   CATEGORY_LABELS,
   MANAGER_VISIBLE_CATEGORIES,
@@ -60,6 +61,7 @@ const CATEGORY_KEYS: Record<string, string[]> = {
 }
 
 export default async function ManagerSettingsPage() {
+  const { user } = await requireRole("manager")
   const settings = await getAppSettings()
 
   return (
@@ -111,7 +113,7 @@ export default async function ManagerSettingsPage() {
 
         <section className="border-border bg-card rounded-2xl border p-6 shadow-sm">
           <h2 className="mb-4 text-sm font-semibold">Security</h2>
-          <ChangePasswordForm />
+          <ChangePasswordForm email={user.email ?? ""} />
         </section>
       </div>
     </div>

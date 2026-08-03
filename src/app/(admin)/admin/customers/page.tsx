@@ -3,6 +3,7 @@ import { Suspense } from "react"
 import { createClient } from "@/lib/supabase/server"
 import { PageHeader } from "@/components/shared/page-header"
 import { FadeIn } from "@/components/shared/fade-in"
+import { AddAccountButton } from "@/components/shared/add-account-button"
 import type { UserStatus } from "@/types"
 
 import { CustomerStats } from "./_components/customer-stats"
@@ -56,6 +57,12 @@ export default async function CustomersPage({
       <PageHeader
         title="Customers"
         description="Manage wholesale buyer accounts — activation, contact details, order history, and outstanding balances."
+        action={
+          <AddAccountButton
+            href="/admin/customers/new"
+            label="Add customer"
+          />
+        }
       />
 
       <FadeIn delay={0}>

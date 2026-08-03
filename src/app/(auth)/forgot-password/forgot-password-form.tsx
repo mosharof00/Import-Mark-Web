@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useTransition } from "react"
+import { useTransition } from "react"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -29,19 +29,13 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 
-export function ForgotPasswordForm({ sent }: { sent: boolean }) {
+export function ForgotPasswordForm() {
   const [isPending, startTransition] = useTransition()
 
   const form = useForm<ForgotPasswordInput>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: { email: "" },
   })
-
-  useEffect(() => {
-    if (sent) {
-      toast.success("If that email exists, a reset link is on its way.")
-    }
-  }, [sent])
 
   function onSubmit(values: ForgotPasswordInput) {
     startTransition(async () => {
@@ -57,7 +51,7 @@ export function ForgotPasswordForm({ sent }: { sent: boolean }) {
       <CardHeader>
         <CardTitle>Forgot password</CardTitle>
         <CardDescription>
-          We&apos;ll send a reset link to your email.
+          We&apos;ll email a 6-digit code so you can reset your password.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -77,7 +71,7 @@ export function ForgotPasswordForm({ sent }: { sent: boolean }) {
               )}
             />
             <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? "Sending..." : "Send reset link"}
+              {isPending ? "Sending..." : "Send verification code"}
             </Button>
           </form>
         </Form>

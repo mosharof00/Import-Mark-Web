@@ -1,4 +1,7 @@
-import { VerifyOtpForm } from "@/app/(auth)/verify-otp/verify-otp-form"
+import {
+  VerifyOtpForm,
+  type OtpFlow,
+} from "@/app/(auth)/verify-otp/verify-otp-form"
 
 export default async function VerifyOtpPage({
   searchParams,
@@ -6,5 +9,12 @@ export default async function VerifyOtpPage({
   searchParams: Promise<{ email?: string; flow?: string }>
 }) {
   const params = await searchParams
-  return <VerifyOtpForm email={params.email ?? ""} />
+  const flow: OtpFlow =
+    params.flow === "recovery"
+      ? "recovery"
+      : params.flow === "invite"
+        ? "invite"
+        : "signup"
+
+  return <VerifyOtpForm email={params.email ?? ""} flow={flow} />
 }

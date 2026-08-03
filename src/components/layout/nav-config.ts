@@ -13,6 +13,7 @@ export type NavIcon =
   | "orders"
   | "inventory"
   | "customers"
+  | "managers"
   | "suppliers"
   | "imports"
   | "reports"
@@ -42,6 +43,7 @@ export const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
     { label: "Payments", href: "/admin/payments", icon: "payments" },
     { label: "Inventory", href: "/admin/inventory", icon: "inventory" },
     { label: "Customers", href: "/admin/customers", icon: "customers" },
+    { label: "Managers", href: "/admin/managers", icon: "managers" },
     { label: "Suppliers", href: "/admin/suppliers", icon: "suppliers" },
     { label: "Imports", href: "/admin/imports", icon: "imports" },
     { label: "Payment Gateways", href: "/admin/payment-gateways", icon: "gateways" },

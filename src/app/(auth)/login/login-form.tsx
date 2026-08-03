@@ -29,12 +29,12 @@ import {
 
 export function LoginForm({
   justRegistered,
-  hadError,
+  errorCode,
   showRegistration = true,
   nextPath,
 }: {
   justRegistered: boolean
-  hadError: boolean
+  errorCode?: string | null
   showRegistration?: boolean
   nextPath?: string | null
 }) {
@@ -49,12 +49,16 @@ export function LoginForm({
   // Surface one-off messages passed via the URL (after registration / errors).
   useEffect(() => {
     if (justRegistered) {
-      toast.success("Account created. It will be active once approved.")
+      toast.success("Email verified. Sign in with your password.")
     }
-    if (hadError) {
+    if (errorCode === "invite_invalid") {
+      toast.error(
+        "This invite link is invalid or has expired. Ask your admin to send a new invite."
+      )
+    } else if (errorCode) {
       toast.error("Sign-in link was invalid or expired. Please try again.")
     }
-  }, [justRegistered, hadError])
+  }, [justRegistered, errorCode])
 
   function onSubmit(values: LoginInput) {
     startTransition(async () => {

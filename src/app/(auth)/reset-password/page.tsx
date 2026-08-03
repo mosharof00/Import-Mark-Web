@@ -1,8 +1,8 @@
 import { updatePassword } from "@/app/(auth)/actions"
 import { PasswordForm } from "@/components/auth/password-form"
 
-// Reached from a password-recovery email (via /auth/confirm, which establishes
-// the recovery session). The user picks a new password here.
+// Reached after verifying the recovery OTP on /verify-otp (or via email link
+// fallback through /auth/confirm). The user picks a new password here.
 export default function ResetPasswordPage() {
   return (
     <PasswordForm

@@ -1,6 +1,6 @@
 "use client"
 
-import { useTransition } from "react"
+import { useState, useTransition } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
@@ -15,21 +15,37 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { changePassword } from "@/lib/profile/actions"
 import {
-  setPasswordSchema,
-  type SetPasswordInput,
+  changePassword,
+  requestChangePasswordOtp,
+} from "@/lib/profile/actions"
+import {
+  changePasswordWithOtpSchema,
+  type ChangePasswordWithOtpInput,
 } from "@/lib/validations/auth"
 
-export function ChangePasswordForm() {
+export function ChangePasswordForm({ email }: { email: string }) {
   const [isPending, startTransition] = useTransition()
+  const [codeSent, setCodeSent] = useState(false)
 
-  const form = useForm<SetPasswordInput>({
-    resolver: zodResolver(setPasswordSchema),
-    defaultValues: { password: "", confirmPassword: "" },
+  const form = useForm<ChangePasswordWithOtpInput>({
+    resolver: zodResolver(changePasswordWithOtpSchema),
+    defaultValues: { password: "", confirmPassword: "", token: "" },
   })
 
-  function onSubmit(values: SetPasswordInput) {
+  function onSendCode() {
+    startTransition(async () => {
+      const result = await requestChangePasswordOtp()
+      if (result?.error) {
+        toast.error(result.error)
+        return
+      }
+      setCodeSent(true)
+      toast.success(result?.success ?? "Verification code sent.")
+    })
+  }
+
+  function onSubmit(values: ChangePasswordWithOtpInput) {
     startTransition(async () => {
       const result = await changePassword(values)
       if (result?.error) {
@@ -38,12 +54,62 @@ export function ChangePasswordForm() {
       }
       toast.success(result?.success ?? "Password updated.")
       form.reset()
+      setCodeSent(false)
     })
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <p className="text-muted-foreground text-sm">
+          We&apos;ll email a 6-digit code to{" "}
+          <span className="text-foreground font-medium">
+            {email || "your account email"}
+          </span>{" "}
+          to confirm it&apos;s you before updating your password.
+        </p>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onSendCode}
+            disabled={isPending || !email}
+          >
+            {isPending && !codeSent
+              ? "Sending..."
+              : codeSent
+                ? "Resend code"
+                : "Send verification code"}
+          </Button>
+          {codeSent ? (
+            <span className="text-muted-foreground text-sm">
+              Code sent to {email}. Check your inbox.
+            </span>
+          ) : null}
+        </div>
+
+        <FormField
+          control={form.control}
+          name="token"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Verification code</FormLabel>
+              <FormControl>
+                <Input
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="123456"
+                  autoComplete="one-time-code"
+                  disabled={!codeSent && !field.value}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="password"
@@ -79,7 +145,7 @@ export function ChangePasswordForm() {
           )}
         />
         <div className="flex justify-end pt-2">
-          <Button type="submit" disabled={isPending}>
+          <Button type="submit" disabled={isPending || !codeSent}>
             {isPending ? "Updating..." : "Update password"}
           </Button>
         </div>

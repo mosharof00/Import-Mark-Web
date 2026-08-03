@@ -26,6 +26,11 @@ function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some((p) => isPathOrSubpath(pathname, p))
 }
 
+/** Invite / email links hit these before a session exists — must not gate them. */
+function isAuthCallbackPath(pathname: string) {
+  return isPathOrSubpath(pathname, "/auth")
+}
+
 function redirectWith(request: NextRequest, to: string, carry: NextResponse) {
   const res = NextResponse.redirect(new URL(to, request.url))
   carry.cookies.getAll().forEach((cookie) => res.cookies.set(cookie))
@@ -38,10 +43,11 @@ export async function middleware(request: NextRequest) {
 
   const isAuthPath = AUTH_PATHS.some((p) => isPathOrSubpath(pathname, p))
   const isPublic = isPublicPath(pathname)
+  const isAuthCallback = isAuthCallbackPath(pathname)
   const role = getUserRole(user)
 
   if (!user) {
-    if (isAuthPath || isPublic) return response
+    if (isAuthPath || isPublic || isAuthCallback) return response
     return redirectWith(request, "/login", response)
   }
 
