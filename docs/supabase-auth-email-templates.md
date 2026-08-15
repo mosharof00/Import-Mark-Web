@@ -5,6 +5,12 @@ Custom SMTP must stay enabled.
 
 Keep **Email OTP expiration** at **3600 seconds (1 hour)** for all auth emails.
 
+These templates live in the Supabase Dashboard, not the Next.js code. After you
+change `name` in `src/config/brand.ts`, replace **ImportMark** in the subjects
+and HTML below with the same brand name.
+
+See also `docs/branding.md`.
+
 ---
 
 ## 1. Confirm sign up

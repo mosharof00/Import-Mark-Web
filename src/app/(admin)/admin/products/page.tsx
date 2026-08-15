@@ -1,16 +1,14 @@
 import { Suspense } from "react"
 
-import { createClient } from "@/lib/supabase/server"
 import { PageHeader } from "@/components/shared/page-header"
 import { FadeIn } from "@/components/shared/fade-in"
 import type { ProductStatus } from "@/types"
 
 import { ProductStats } from "./_components/product-stats"
-import {
-  ProductStatusTabs,
-  type ProductFilter,
-} from "./_components/product-status-tabs"
+import { ProductStatusTabs } from "./_components/product-status-tabs"
+import { ProductStatusTabsLoader } from "./_components/product-status-tabs-loader"
 import { ProductList } from "./_components/product-list"
+import type { ProductFilter } from "./_components/product-status-tabs"
 import {
   ProductStatsSkeleton,
   ProductListSkeleton,
@@ -40,25 +38,6 @@ export default async function ProductsPage({
   const { status: statusParam } = await searchParams
   const status = parseStatus(statusParam)
 
-  const supabase = await createClient()
-  const countResults = await Promise.all([
-    supabase.from("products").select("id", { count: "exact", head: true }),
-    ...PRODUCT_STATUSES.map((s) =>
-      supabase
-        .from("products")
-        .select("id", { count: "exact", head: true })
-        .eq("status", s)
-    ),
-  ])
-
-  const counts: Record<ProductFilter, number> = {
-    all: countResults[0].count ?? 0,
-    active: countResults[1].count ?? 0,
-    pending_approval: countResults[2].count ?? 0,
-    inactive: countResults[3].count ?? 0,
-    rejected: countResults[4].count ?? 0,
-  }
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -72,7 +51,9 @@ export default async function ProductsPage({
         </Suspense>
       </FadeIn>
 
-      <ProductStatusTabs active={status} counts={counts} />
+      <Suspense fallback={<ProductStatusTabs active={status} />}>
+        <ProductStatusTabsLoader active={status} />
+      </Suspense>
 
       <FadeIn key={status}>
         <Suspense fallback={<ProductListSkeleton />}>

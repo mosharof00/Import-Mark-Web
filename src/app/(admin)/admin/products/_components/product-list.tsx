@@ -3,6 +3,7 @@ import { Package } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { EmptyState } from "@/components/shared/empty-state"
 import { ErrorCard } from "@/components/shared/error-card"
+import { DEFAULT_LIST_LIMIT } from "@/lib/query/list-limit"
 import type { ProductStatus } from "@/types"
 
 import { ProductsTable, type ProductRow } from "./products-table"
@@ -19,6 +20,7 @@ export async function ProductList({ status }: { status: ProductFilter }) {
         "id, name, sku, sell_price, unit, status, categories(name), brands(name), stock(quantity_available, low_stock_threshold)"
       )
       .order("created_at", { ascending: false })
+      .limit(DEFAULT_LIST_LIMIT)
 
     if (status !== "all") {
       query = query.eq("status", status)

@@ -4,6 +4,7 @@ import { ArrowRight, Mail, MapPin, Phone } from "lucide-react"
 import { Reveal } from "@/components/landing/motion"
 import { ProductGrid } from "@/components/landing/product-card"
 import { buttonVariants } from "@/components/ui/button"
+import { brand } from "@/config/brand"
 import {
   getLandingCurrency,
   getLandingSettings,
@@ -35,7 +36,7 @@ export default async function LandingPage() {
           </Reveal>
           <Reveal delay={0.12}>
             <p className="text-muted-foreground mt-6 max-w-2xl text-lg leading-relaxed">
-              ImportMark supplies trusted brands in waterproofing, admixtures,
+              {brand.name} supplies trusted brands in waterproofing, admixtures,
               sealants, and specialty chemicals — with a streamlined ordering
               experience for contractors and traders.
             </p>
@@ -125,21 +126,23 @@ export default async function LandingPage() {
               <Mail className="text-muted-foreground size-5" />
               <p className="font-medium">Email</p>
               <a
-                href="mailto:info@importmark.com"
+                href={`mailto:${brand.contact.email}`}
                 className="text-muted-foreground hover:text-foreground text-sm"
               >
-                info@importmark.com
+                {brand.contact.email}
               </a>
             </div>
             <div className="space-y-2">
               <Phone className="text-muted-foreground size-5" />
               <p className="font-medium">Phone</p>
-              <p className="text-muted-foreground text-sm">+880 1XXX-XXXXXX</p>
+              <p className="text-muted-foreground text-sm">{brand.contact.phone}</p>
             </div>
             <div className="space-y-2">
               <MapPin className="text-muted-foreground size-5" />
               <p className="font-medium">Office</p>
-              <p className="text-muted-foreground text-sm">Dhaka, Bangladesh</p>
+              <p className="text-muted-foreground text-sm">
+                {brand.contact.location}
+              </p>
             </div>
           </Reveal>
         </div>

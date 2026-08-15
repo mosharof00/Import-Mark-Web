@@ -5,6 +5,7 @@ import { getAuthedUser } from "@/lib/auth/get-user"
 import { getAppSettings } from "@/lib/settings/get-settings"
 import { EmptyState } from "@/components/shared/empty-state"
 import { ErrorCard } from "@/components/shared/error-card"
+import { DEFAULT_LIST_LIMIT } from "@/lib/query/list-limit"
 import type { DeliveryMethod, OrderStatus } from "@/types"
 
 import {
@@ -29,6 +30,7 @@ export async function OrderList({ status }: { status: OrderFilter }) {
         "id, order_number, total_amount, paid_amount, due_amount, status, delivery_method, created_at, customers(full_name, company_name)"
       )
       .order("created_at", { ascending: false })
+      .limit(DEFAULT_LIST_LIMIT)
 
     if (!settings.manager_can_approve_orders) {
       if (status === "in_progress") {

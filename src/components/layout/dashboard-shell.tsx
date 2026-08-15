@@ -22,9 +22,11 @@ export async function DashboardShell({
   user: User
   children: React.ReactNode
 }) {
-  const profile = await getCurrentProfile(user.id, role)
-  const unreadCount = await getUnreadNotificationCount(user.id)
-  const currency = await getPlatformCurrency()
+  const [profile, unreadCount, currency] = await Promise.all([
+    getCurrentProfile(user.id, role),
+    getUnreadNotificationCount(user.id),
+    getPlatformCurrency(),
+  ])
 
   const displayName =
     profile?.fullName ??

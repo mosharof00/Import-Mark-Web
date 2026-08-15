@@ -1,5 +1,7 @@
 import "server-only"
 
+import { cache } from "react"
+
 import { createClient } from "@/lib/supabase/server"
 import type { UserRole } from "@/lib/auth/roles"
 import type { UserStatus } from "@/types"
@@ -20,7 +22,7 @@ export type UserProfile = {
   isActive?: boolean
 }
 
-export async function getCurrentProfile(
+export const getCurrentProfile = cache(async function getCurrentProfile(
   userId: string,
   role: UserRole
 ): Promise<UserProfile | null> {
@@ -92,9 +94,11 @@ export async function getCurrentProfile(
     area: data.area,
     city: data.city,
   }
-}
+})
 
-export async function getUnreadNotificationCount(userId: string): Promise<number> {
+export const getUnreadNotificationCount = cache(async function getUnreadNotificationCount(
+  userId: string
+): Promise<number> {
   const supabase = await createClient()
   const { count } = await supabase
     .from("notifications")
@@ -103,4 +107,4 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
     .eq("is_read", false)
 
   return count ?? 0
-}
+})

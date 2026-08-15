@@ -19,7 +19,7 @@ export async function CustomerStats() {
         .from("customers")
         .select("id", { count: "exact", head: true })
         .eq("status", "pending"),
-      supabase.from("customer_ledger").select("total_due"),
+      supabase.from("customer_ledger").select("total_due.sum()").maybeSingle(),
     ])
 
     if (totalRes.error) throw totalRes.error
@@ -28,10 +28,10 @@ export async function CustomerStats() {
     if (ledgerRes.error) throw ledgerRes.error
 
     const pendingCount = pendingRes.count ?? 0
-    const totalDue = (ledgerRes.data ?? []).reduce(
-      (sum, row) => sum + (row.total_due ?? 0),
-      0
-    )
+    const totalDue =
+      Number(
+        (ledgerRes.data as { sum?: number | string } | null)?.sum ?? 0
+      ) || 0
 
     return (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -16,7 +16,7 @@ export function ProductStatusTabs({
   counts,
 }: {
   active: ProductFilter
-  counts: Record<ProductFilter, number>
+  counts?: Partial<Record<ProductFilter, number>>
 }) {
   const tabs: { id: ProductFilter; label: string }[] = [
     { id: "all", label: "All" },
@@ -31,7 +31,7 @@ export function ProductStatusTabs({
       <div className="flex flex-wrap gap-1">
         {tabs.map((tab) => {
           const isActive = tab.id === active
-          const count = counts[tab.id]
+          const count = counts?.[tab.id]
           return (
             <Link
               key={tab.id}
@@ -40,6 +40,7 @@ export function ProductStatusTabs({
                   ? "/admin/products"
                   : `/admin/products?status=${tab.id}`
               }
+              prefetch
               className={cn(
                 "relative -mb-px flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
                 isActive
@@ -48,16 +49,22 @@ export function ProductStatusTabs({
               )}
             >
               {tab.label}
-              <span
-                className={cn(
-                  "inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums",
-                  isActive
-                    ? "bg-muted text-foreground"
-                    : "bg-muted/60 text-muted-foreground"
-                )}
-              >
-                {count}
-              </span>
+              {count !== undefined ? (
+                <span
+                  className={cn(
+                    "inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums",
+                    isActive
+                      ? "bg-muted text-foreground"
+                      : "bg-muted/60 text-muted-foreground"
+                  )}
+                >
+                  {count}
+                </span>
+              ) : (
+                <span className="bg-muted/40 inline-flex min-w-5 animate-pulse rounded-full px-1.5 py-0.5 text-xs text-transparent">
+                  0
+                </span>
+              )}
             </Link>
           )
         })}

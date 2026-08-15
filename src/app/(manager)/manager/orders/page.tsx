@@ -1,9 +1,9 @@
 import { Suspense } from "react"
 
-import { createClient } from "@/lib/supabase/server"
-import { getAuthedUser } from "@/lib/auth/get-user"
 import { PageHeader } from "@/components/shared/page-header"
 import { FadeIn } from "@/components/shared/fade-in"
+import { createClient } from "@/lib/supabase/server"
+import { getAuthedUser } from "@/lib/auth/get-user"
 
 import { OrderStats } from "./_components/order-stats"
 import { OrderStatusTabs } from "./_components/order-status-tabs"
@@ -36,6 +36,53 @@ function parseStatus(value: string | undefined): OrderFilter {
   return "all"
 }
 
+async function ManagerOrderStatusTabsLoader({
+  active,
+}: {
+  active: OrderFilter
+}) {
+  const { user } = await getAuthedUser()
+  const supabase = await createClient()
+
+  if (!user) {
+    return <OrderStatusTabs active={active} counts={{
+      all: 0,
+      pending_approval: 0,
+      in_progress: 0,
+      delivered: 0,
+      closed: 0,
+    }} />
+  }
+
+  const base = () =>
+    supabase
+      .from("sales_orders")
+      .select("id", { count: "exact", head: true })
+      .eq("created_by", user.id)
+
+  const [allRes, pendingRes, progressRes, deliveredRes, closedRes] =
+    await Promise.all([
+      base(),
+      base().eq("status", "pending_approval"),
+      base().in("status", IN_PROGRESS_STATUSES),
+      base().eq("status", "delivered"),
+      base().in("status", CLOSED_STATUSES),
+    ])
+
+  return (
+    <OrderStatusTabs
+      active={active}
+      counts={{
+        all: allRes.count ?? 0,
+        pending_approval: pendingRes.count ?? 0,
+        in_progress: progressRes.count ?? 0,
+        delivered: deliveredRes.count ?? 0,
+        closed: closedRes.count ?? 0,
+      }}
+    />
+  )
+}
+
 export default async function ManagerOrdersPage({
   searchParams,
 }: {
@@ -43,40 +90,6 @@ export default async function ManagerOrdersPage({
 }) {
   const { status: statusParam } = await searchParams
   const status = parseStatus(statusParam)
-
-  const { user } = await getAuthedUser()
-  const supabase = await createClient()
-
-  const base = () =>
-    supabase
-      .from("sales_orders")
-      .select("id", { count: "exact", head: true })
-      .eq("created_by", user?.id ?? "")
-
-  const [allRes, pendingRes, progressRes, deliveredRes, closedRes] =
-    user
-      ? await Promise.all([
-          base(),
-          base().eq("status", "pending_approval"),
-          base().in("status", IN_PROGRESS_STATUSES),
-          base().eq("status", "delivered"),
-          base().in("status", CLOSED_STATUSES),
-        ])
-      : [
-          { count: 0 },
-          { count: 0 },
-          { count: 0 },
-          { count: 0 },
-          { count: 0 },
-        ]
-
-  const counts: Record<OrderFilter, number> = {
-    all: allRes.count ?? 0,
-    pending_approval: pendingRes.count ?? 0,
-    in_progress: progressRes.count ?? 0,
-    delivered: deliveredRes.count ?? 0,
-    closed: closedRes.count ?? 0,
-  }
 
   return (
     <div className="space-y-6">
@@ -92,7 +105,9 @@ export default async function ManagerOrdersPage({
         </Suspense>
       </FadeIn>
 
-      <OrderStatusTabs active={status} counts={counts} />
+      <Suspense fallback={<OrderStatusTabs active={status} />}>
+        <ManagerOrderStatusTabsLoader active={status} />
+      </Suspense>
 
       <FadeIn key={status}>
         <Suspense fallback={<OrderListSkeleton />}>

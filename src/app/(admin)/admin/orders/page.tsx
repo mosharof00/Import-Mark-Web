@@ -1,18 +1,14 @@
 import { Suspense } from "react"
 
-import { createClient } from "@/lib/supabase/server"
 import { PageHeader } from "@/components/shared/page-header"
 import { FadeIn } from "@/components/shared/fade-in"
 
 import { OrderStats } from "./_components/order-stats"
 import { OrderStatusTabs } from "./_components/order-status-tabs"
+import { OrderStatusTabsLoader } from "./_components/order-status-tabs-loader"
 import { OrderList } from "./_components/order-list"
 import { PlaceOrderButton } from "./_components/place-order-button"
-import {
-  CLOSED_STATUSES,
-  IN_PROGRESS_STATUSES,
-  type OrderFilter,
-} from "./_components/order-filters"
+import { type OrderFilter } from "./_components/order-filters"
 import {
   OrderStatsSkeleton,
   OrderListSkeleton,
@@ -43,36 +39,6 @@ export default async function OrdersPage({
   const { status: statusParam } = await searchParams
   const status = parseStatus(statusParam)
 
-  const supabase = await createClient()
-  const [allRes, pendingRes, progressRes, deliveredRes, closedRes] =
-    await Promise.all([
-      supabase.from("sales_orders").select("id", { count: "exact", head: true }),
-      supabase
-        .from("sales_orders")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "pending_approval"),
-      supabase
-        .from("sales_orders")
-        .select("id", { count: "exact", head: true })
-        .in("status", IN_PROGRESS_STATUSES),
-      supabase
-        .from("sales_orders")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "delivered"),
-      supabase
-        .from("sales_orders")
-        .select("id", { count: "exact", head: true })
-        .in("status", CLOSED_STATUSES),
-    ])
-
-  const counts: Record<OrderFilter, number> = {
-    all: allRes.count ?? 0,
-    pending_approval: pendingRes.count ?? 0,
-    in_progress: progressRes.count ?? 0,
-    delivered: deliveredRes.count ?? 0,
-    closed: closedRes.count ?? 0,
-  }
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -87,7 +53,9 @@ export default async function OrdersPage({
         </Suspense>
       </FadeIn>
 
-      <OrderStatusTabs active={status} counts={counts} />
+      <Suspense fallback={<OrderStatusTabs active={status} />}>
+        <OrderStatusTabsLoader active={status} />
+      </Suspense>
 
       <FadeIn key={status}>
         <Suspense fallback={<OrderListSkeleton />}>

@@ -1,6 +1,5 @@
 import { Suspense } from "react"
 
-import { createClient } from "@/lib/supabase/server"
 import { PageHeader } from "@/components/shared/page-header"
 import { FadeIn } from "@/components/shared/fade-in"
 import { AddAccountButton } from "@/components/shared/add-account-button"
@@ -8,6 +7,7 @@ import type { UserStatus } from "@/types"
 
 import { CustomerStats } from "./_components/customer-stats"
 import { CustomerStatusTabs } from "./_components/customer-status-tabs"
+import { CustomerStatusTabsLoader } from "./_components/customer-status-tabs-loader"
 import { CustomerList } from "./_components/customer-list"
 import type { CustomerFilter } from "./_components/customer-filters"
 import {
@@ -34,24 +34,6 @@ export default async function CustomersPage({
   const { status: statusParam } = await searchParams
   const status = parseStatus(statusParam)
 
-  const supabase = await createClient()
-  const countResults = await Promise.all([
-    supabase.from("customers").select("id", { count: "exact", head: true }),
-    ...CUSTOMER_STATUSES.map((s) =>
-      supabase
-        .from("customers")
-        .select("id", { count: "exact", head: true })
-        .eq("status", s)
-    ),
-  ])
-
-  const counts: Record<CustomerFilter, number> = {
-    all: countResults[0].count ?? 0,
-    active: countResults[1].count ?? 0,
-    pending: countResults[2].count ?? 0,
-    inactive: countResults[3].count ?? 0,
-  }
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -71,7 +53,9 @@ export default async function CustomersPage({
         </Suspense>
       </FadeIn>
 
-      <CustomerStatusTabs active={status} counts={counts} />
+      <Suspense fallback={<CustomerStatusTabs active={status} />}>
+        <CustomerStatusTabsLoader active={status} />
+      </Suspense>
 
       <FadeIn key={status}>
         <Suspense fallback={<CustomerListSkeleton />}>

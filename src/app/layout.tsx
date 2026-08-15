@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 
+import { brand } from "@/config/brand"
 import { Toaster } from "@/components/ui/sonner"
 
 // Geist is exposed as --font-sans so it maps to the theme token in globals.css.
@@ -16,9 +17,19 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "ImportMark",
-  description:
-    "Construction chemicals import & wholesale management platform.",
+  title: {
+    default: brand.name,
+    template: `%s | ${brand.name}`,
+  },
+  description: brand.description,
+  applicationName: brand.name,
+  icons: {
+    icon: [
+      { url: brand.favicon, sizes: "any" },
+      { url: brand.logoIcon, type: "image/png" },
+    ],
+    apple: brand.appleIcon,
+  },
 }
 
 export default function RootLayout({

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { getAppSettings } from "@/lib/settings/get-settings"
 import { EmptyState } from "@/components/shared/empty-state"
 import { ErrorCard } from "@/components/shared/error-card"
+import { DEFAULT_LIST_LIMIT } from "@/lib/query/list-limit"
 
 import {
   INVENTORY_FILTER_LABELS,
@@ -17,13 +18,22 @@ export async function InventoryList({ status }: { status: InventoryFilter }) {
   const settings = await getAppSettings()
 
   try {
-    const { data: stockRows, error } = await supabase
+    let query = supabase
       .from("stock")
       .select(
         "quantity_available, low_stock_threshold, last_updated, products!inner(id, name, sku, status, categories(name), brands(name))"
       )
       .eq("products.status", "active")
       .order("quantity_available", { ascending: true })
+      .limit(DEFAULT_LIST_LIMIT)
+
+    if (status === "out_of_stock") {
+      query = query.eq("quantity_available", 0)
+    } else if (status === "low_stock" || status === "healthy") {
+      query = query.gt("quantity_available", 0)
+    }
+
+    const { data: stockRows, error } = await query
 
     if (error) throw error
 
@@ -47,8 +57,6 @@ export async function InventoryList({ status }: { status: InventoryFilter }) {
 
     if (status === "low_stock") {
       rows = rows.filter((r) => r.health === "low_stock")
-    } else if (status === "out_of_stock") {
-      rows = rows.filter((r) => r.health === "out_of_stock")
     } else if (status === "healthy") {
       rows = rows.filter((r) => r.health === "healthy")
     }

@@ -14,6 +14,8 @@ import { StatCard } from "@/components/shared/stat-card"
 import { formatDate, formatRelativeTime, formatTaka } from "@/lib/format"
 import type { PaymentMode, ShipmentStatus } from "@/types"
 
+import { ImportStatusActions } from "./import-status-actions"
+
 const PAYMENT_LABEL: Record<PaymentMode, string> = {
   cash: "Cash",
   bank_transfer: "Bank transfer",
@@ -139,6 +141,7 @@ export async function ImportDetail({ importId }: { importId: string }) {
             Recorded {formatDate(shipment.created_at)} by {recorderName}
           </p>
         </div>
+        <ImportStatusActions shipmentId={shipment.id} status={status} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { BrandLogo } from "@/components/layout/brand-logo"
 
 /**
  * Presentational layout for all auth pages (login, signup, OTP, password reset).
@@ -16,13 +16,8 @@ export default function AuthLayout({
   return (
     <div className="bg-muted/30 flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        <div className="mb-6 text-center">
-          <Link href="/" className="inline-block">
-            <h1 className="text-2xl font-bold tracking-tight">ImportMark</h1>
-            <p className="text-muted-foreground text-sm">
-              Import &amp; wholesale management
-            </p>
-          </Link>
+        <div className="mb-8 text-center">
+          <BrandLogo href="/" variant="full" className="mx-auto" />
         </div>
         {children}
       </div>

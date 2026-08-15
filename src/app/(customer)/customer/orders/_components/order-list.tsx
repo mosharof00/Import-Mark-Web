@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { getAuthedUser } from "@/lib/auth/get-user"
 import { EmptyState } from "@/components/shared/empty-state"
 import { ErrorCard } from "@/components/shared/error-card"
+import { DEFAULT_LIST_LIMIT } from "@/lib/query/list-limit"
 import type { DeliveryMethod, OrderStatus } from "@/types"
 
 import {
@@ -28,6 +29,7 @@ export async function OrderList({ status }: { status: OrderFilter }) {
       )
       .eq("customer_id", user.id)
       .order("created_at", { ascending: false })
+      .limit(DEFAULT_LIST_LIMIT)
 
     if (status === "pending_approval") {
       query = query.eq("status", "pending_approval")

@@ -3,6 +3,7 @@ import { ShoppingCart } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { EmptyState } from "@/components/shared/empty-state"
 import { ErrorCard } from "@/components/shared/error-card"
+import { DEFAULT_LIST_LIMIT } from "@/lib/query/list-limit"
 import type { OrderStatus } from "@/types"
 
 import {
@@ -20,9 +21,10 @@ export async function OrderList({ status }: { status: OrderFilter }) {
     let query = supabase
       .from("sales_orders")
       .select(
-        "id, order_number, total_amount, paid_amount, due_amount, status, created_at, created_by, customers(full_name, company_name), order_items(id)"
+        "id, order_number, total_amount, paid_amount, due_amount, status, created_at, created_by, customers(full_name, company_name), order_items(count)"
       )
       .order("created_at", { ascending: false })
+      .limit(DEFAULT_LIST_LIMIT)
 
     if (status === "pending_approval") {
       query = query.eq("status", "pending_approval")
@@ -34,29 +36,35 @@ export async function OrderList({ status }: { status: OrderFilter }) {
       query = query.in("status", CLOSED_STATUSES)
     }
 
-    const { data: orders, error } = await query
+    const [{ data: orders, error }, { data: managers }] = await Promise.all([
+      query,
+      supabase.from("managers").select("id, full_name"),
+    ])
     if (error) throw error
 
-    const { data: managers } = await supabase
-      .from("managers")
-      .select("id, full_name")
     const managerName = new Map(
       (managers ?? []).map((m) => [m.id, m.full_name])
     )
 
-    const rows: OrderRow[] = (orders ?? []).map((order) => ({
-      id: order.id,
-      orderNumber: order.order_number,
-      customerName: order.customers?.full_name ?? "Unknown",
-      companyName: order.customers?.company_name ?? null,
-      itemCount: order.order_items?.length ?? 0,
-      totalAmount: order.total_amount,
-      paidAmount: order.paid_amount,
-      dueAmount: order.due_amount ?? 0,
-      status: order.status as OrderStatus,
-      createdByName: managerName.get(order.created_by) ?? "Staff",
-      createdAt: order.created_at,
-    }))
+    const rows: OrderRow[] = (orders ?? []).map((order) => {
+      const itemCountRaw = order.order_items as
+        | { count: number }[]
+        | null
+        | undefined
+      return {
+        id: order.id,
+        orderNumber: order.order_number,
+        customerName: order.customers?.full_name ?? "Unknown",
+        companyName: order.customers?.company_name ?? null,
+        itemCount: itemCountRaw?.[0]?.count ?? 0,
+        totalAmount: order.total_amount,
+        paidAmount: order.paid_amount,
+        dueAmount: order.due_amount ?? 0,
+        status: order.status as OrderStatus,
+        createdByName: managerName.get(order.created_by) ?? "Staff",
+        createdAt: order.created_at,
+      }
+    })
 
     if (rows.length === 0) {
       return (

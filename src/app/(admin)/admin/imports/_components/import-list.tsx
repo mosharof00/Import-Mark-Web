@@ -3,7 +3,10 @@ import { Ship } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { EmptyState } from "@/components/shared/empty-state"
 import { ErrorCard } from "@/components/shared/error-card"
+import { DEFAULT_LIST_LIMIT } from "@/lib/query/list-limit"
 import type { ShipmentStatus } from "@/types"
+
+import { AddImportButton } from "./add-import-button"
 
 import { ImportsTable, type ImportRow } from "./imports-table"
 import {
@@ -23,6 +26,7 @@ export async function ImportList({ status }: { status: ImportFilter }) {
         "id, shipment_ref, status, currency, total_landed_cost, total_invoice_bdt, shipment_date, arrival_date, created_at, supplier_id, suppliers(name), import_shipment_items(id)"
       )
       .order("created_at", { ascending: false })
+      .limit(DEFAULT_LIST_LIMIT)
 
     if (status === "in_transit") {
       query = query.eq("status", "in_transit")
@@ -59,9 +63,10 @@ export async function ImportList({ status }: { status: ImportFilter }) {
             title="No imports found"
             description={
               status === "all"
-                ? "Import shipments will appear here once recorded."
+                ? "Record a shipment to start the import cycle. Stock is added when it is marked cleared."
                 : `No shipments in "${IMPORT_FILTER_LABELS[status]}".`
             }
+            action={status === "all" ? <AddImportButton /> : undefined}
           />
         </div>
       )

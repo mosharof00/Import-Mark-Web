@@ -3,7 +3,7 @@ import { Suspense } from "react"
 import { createClient } from "@/lib/supabase/server"
 import { PageHeader } from "@/components/shared/page-header"
 import { FadeIn } from "@/components/shared/fade-in"
-
+import { AddImportButton } from "./_components/add-import-button"
 import { ImportStats } from "./_components/import-stats"
 import { ImportStatusTabs } from "./_components/import-status-tabs"
 import { ImportList } from "./_components/import-list"
@@ -75,6 +75,7 @@ export default async function ImportsPage({
       <PageHeader
         title="Imports"
         description="Track inbound shipments — transit status, customs clearance, landed costs, and line-item breakdowns."
+        action={<AddImportButton />}
       />
 
       <FadeIn delay={0}>

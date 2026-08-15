@@ -1,5 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="NoctuleWorkspaceSettings">
+    <fileSettings>
+      <settings filePath="$PROJECT_DIR$/import_mark_app/ios/Runner.xcworkspace/contents.xcworkspacedata">
+        <projectSettings projectType="noctule.xcode">
+          <filePath>$PROJECT_DIR$/import_mark_app/ios/Runner.xcworkspace/contents.xcworkspacedata</filePath>
+        </projectSettings>
+      </settings>
+      <settings filePath="$PROJECT_DIR$/import_mark_app/linux/flutter/ephemeral/.plugin_symlinks/jni/example/macos/Runner.xcworkspace/contents.xcworkspacedata">
+        <projectSettings projectType="noctule.xcode">
+          <filePath>$PROJECT_DIR$/import_mark_app/linux/flutter/ephemeral/.plugin_symlinks/jni/example/macos/Runner.xcworkspace/contents.xcworkspacedata</filePath>
+        </projectSettings>
+      </settings>
+      <settings filePath="$PROJECT_DIR$/import_mark_app/linux/flutter/ephemeral/.plugin_symlinks/rive_native/ios/rive_native/Package.swift">
+        <projectSettings projectType="noctule.spm">
+          <filePath>$PROJECT_DIR$/import_mark_app/linux/flutter/ephemeral/.plugin_symlinks/rive_native/ios/rive_native/Package.swift</filePath>
+        </projectSettings>
+      </settings>
+      <settings filePath="$PROJECT_DIR$/import_mark_app/linux/flutter/ephemeral/.plugin_symlinks/rive_native/macos/rive_native/Package.swift">
+        <projectSettings projectType="noctule.spm">
+          <filePath>$PROJECT_DIR$/import_mark_app/linux/flutter/ephemeral/.plugin_symlinks/rive_native/macos/rive_native/Package.swift</filePath>
+        </projectSettings>
+      </settings>
+      <settings filePath="$PROJECT_DIR$/import_mark_app/macos/Runner.xcworkspace/contents.xcworkspacedata">
+        <projectSettings projectType="noctule.xcode">
+          <filePath>$PROJECT_DIR$/import_mark_app/macos/Runner.xcworkspace/contents.xcworkspacedata</filePath>
+        </projectSettings>
+      </settings>
+      <settings filePath="$PROJECT_DIR$/import_mark_app/windows/flutter/ephemeral/.plugin_symlinks/jni/example/macos/Runner.xcworkspace/contents.xcworkspacedata">
+        <projectSettings projectType="noctule.xcode">
+          <filePath>$PROJECT_DIR$/import_mark_app/windows/flutter/ephemeral/.plugin_symlinks/jni/example/macos/Runner.xcworkspace/contents.xcworkspacedata</filePath>
+        </projectSettings>
+      </settings>
+      <settings filePath="$PROJECT_DIR$/import_mark_app/windows/flutter/ephemeral/.plugin_symlinks/rive_native/ios/rive_native/Package.swift">
+        <projectSettings projectType="noctule.spm">
+          <filePath>$PROJECT_DIR$/import_mark_app/windows/flutter/ephemeral/.plugin_symlinks/rive_native/ios/rive_native/Package.swift</filePath>
+        </projectSettings>
+      </settings>
+      <settings filePath="$PROJECT_DIR$/import_mark_app/windows/flutter/ephemeral/.plugin_symlinks/rive_native/macos/rive_native/Package.swift">
+        <projectSettings projectType="noctule.spm">
+          <filePath>$PROJECT_DIR$/import_mark_app/windows/flutter/ephemeral/.plugin_symlinks/rive_native/macos/rive_native/Package.swift</filePath>
+        </projectSettings>
+      </settings>
+    </fileSettings>
+  </component>
   <component name="SwiftToolchain">
     <option name="toolchain" value="xcode-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift" />
   </component>

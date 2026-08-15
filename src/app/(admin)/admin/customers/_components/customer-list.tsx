@@ -3,6 +3,7 @@ import { Users } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { EmptyState } from "@/components/shared/empty-state"
 import { ErrorCard } from "@/components/shared/error-card"
+import { DEFAULT_LIST_LIMIT } from "@/lib/query/list-limit"
 import type { UserStatus } from "@/types"
 
 import { CustomersTable, type CustomerRow } from "./customers-table"
@@ -22,6 +23,7 @@ export async function CustomerList({ status }: { status: CustomerFilter }) {
       .from("customers")
       .select("id, full_name, company_name, email, phone, city, area, status, created_at")
       .order("created_at", { ascending: false })
+      .limit(DEFAULT_LIST_LIMIT)
 
     if (status !== "all") {
       query = query.eq("status", status)

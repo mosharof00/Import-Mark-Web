@@ -1,3 +1,4 @@
+import { cache } from "react"
 import { redirect } from "next/navigation"
 
 import { createClient } from "@/lib/supabase/server"
@@ -7,15 +8,17 @@ import { getUserRole, type UserRole } from "@/lib/auth/roles"
  * Returns the current authenticated user and their role, or null if not signed
  * in. Use this in Server Components / Server Actions when you want to read the
  * user without forcing a redirect.
+ *
+ * Cached per request so layout + page don't each hit Auth.
  */
-export async function getAuthedUser() {
+export const getAuthedUser = cache(async () => {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
   return { user, role: getUserRole(user) }
-}
+})
 
 /**
  * Guards a Server Component: ensures the visitor is signed in AND (optionally)
