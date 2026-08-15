@@ -225,7 +225,7 @@ export async function verifyCustomerOtp(
     })
   }
 
-  let user = verify.data.user
+  const user = verify.data.user
 
   // Token already used (double-click / prior success): finish account if confirmed.
   if (verify.error || !user) {
