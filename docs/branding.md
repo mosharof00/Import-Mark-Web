@@ -24,16 +24,24 @@ Open `src/config/brand.ts` and change:
 - `tagline` — subtitle under the wordmark
 - `description` — SEO / meta description
 - `contact.email`, `contact.phone`, `contact.location` — landing page contact block
+- `assetVersion` — **bump this** (e.g. `"1"` → `"2"`) every time you replace logo files
 
 Asset paths default to the files above. Change a path only if you rename a file.
 
-Restart the Next.js server after edits (`npm run dev`).
+Then:
+
+1. Stop the dev server (`Ctrl+C`)
+2. Run `npm run dev` again
+3. Hard-refresh the browser (`Cmd+Shift+R` on Mac, `Ctrl+Shift+R` on Windows)
+
+Restarting alone is not always enough — the browser and Next.js can keep the previous images for the same filename.
 
 ## Logo rules
 
 - Prefer a **transparent PNG** (or SVG) so the sidebar color does not show a white/black box.
 - Header uses **icon + text from config**, not the full stacked logo squeezed into 40px.
-- `logo-full.png` is for login/signup; it can include name + tagline in the image.
+- `logo-full.png` is for login/signup. The **name is part of that image**, not `brand.name`. If login still shows the old wordmark, replace `logo-full.png` and bump `assetVersion`.
+- Prefer a **transparent** (not black) background so the icon is visible on the beige header.
 
 ## Email templates
 

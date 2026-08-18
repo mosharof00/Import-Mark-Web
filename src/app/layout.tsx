@@ -25,10 +25,9 @@ export const metadata: Metadata = {
   applicationName: brand.name,
   icons: {
     icon: [
-      { url: brand.favicon, sizes: "any" },
-      { url: brand.logoIcon, type: "image/png" },
+      { url: `${brand.logoIcon}?v=${brand.assetVersion}`, type: "image/png" },
     ],
-    apple: brand.appleIcon,
+    apple: `${brand.appleIcon}?v=${brand.assetVersion}`,
   },
 }
 
